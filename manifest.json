@@ -89,28 +89,17 @@
     "widgets": [
         {
             "name": "Weer Widget",
+            "short_name": "Weer",
             "description": "Bekijk snel het huidige weer",
-            "tag": "weather-widget",
+            "tag": "weather-current",
             "ms_ac_template": "widget/weather-widget.json",
             "data": "widget/weather-data.json",
             "type": "application/json",
-            "screenshots": [
-                {
-                    "src": "icons/widget-screenshot.png",
-                    "sizes": "400x400",
-                    "label": "Weer widget"
-                }
-            ],
+            "update_frequency": 900,
             "icons": [
                 {
                     "src": "icons/icon-192.png",
                     "sizes": "192x192"
-                }
-            ],
-            "backgrounds": [
-                {
-                    "src": "icons/widget-bg.png",
-                    "sizes": "400x400"
                 }
             ]
         }

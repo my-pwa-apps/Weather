@@ -696,8 +696,9 @@ function setupSwipeGestures() {
     function handleTouchStart(e) {
         touchStartX = e.changedTouches[0].screenX;
         touchStartY = e.changedTouches[0].screenY;
-        // Check if touch started on the map
-        touchStartedOnMap = e.target.closest('#precipMap') !== null;
+        // Check if touch started on the map or slider
+        touchStartedOnMap = e.target.closest('#precipMap') !== null || 
+                            e.target.closest('#timelineSlider') !== null;
     }
     
     function handleTouchEnd(e) {
@@ -716,7 +717,7 @@ function setupSwipeGestures() {
     }
     
     function handleSwipe() {
-        // Don't swipe when touch started on the map (allow map panning)
+        // Don't swipe when touch started on the map or slider (allow map panning/slider dragging)
         if (touchStartedOnMap) return;
         
         const deltaX = touchEndX - touchStartX;
@@ -1130,7 +1131,20 @@ async function fetchWeather() {
     showLoading();
     
     const { latitude, longitude, name, country } = state.currentLocation;
-    elements.locationName.textContent = country ? `${name}, ${country}` : name;
+    const locationName = country ? `${name}, ${country}` : name;
+    elements.locationName.textContent = locationName;
+    
+    // Store location for widget access
+    const widgetLocation = { latitude, longitude, name: locationName };
+    localStorage.setItem('widgetLocation', JSON.stringify(widgetLocation));
+    
+    // Notify service worker of location update for widgets
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+            type: 'WIDGET_LOCATION_UPDATE',
+            location: widgetLocation
+        });
+    }
     
     try {
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation&hourly=temperature_2m,weather_code,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant,relative_humidity_2m_mean&timezone=auto`;
