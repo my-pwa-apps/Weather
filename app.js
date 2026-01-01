@@ -1278,6 +1278,16 @@ function selectDailyItem(index) {
     }
 }
 
+// Format hour based on time format setting
+function formatHour(hour) {
+    if (state.use24HourFormat) {
+        return `${hour}:00`;
+    }
+    if (hour === 0) return '12 AM';
+    if (hour === 12) return '12 PM';
+    return hour > 12 ? `${hour - 12} PM` : `${hour} AM`;
+}
+
 // Update background based on weather
 function updateBackground(weatherCode, temperature) {
     document.body.classList.remove('sunny', 'cloudy', 'rainy', 'night-mode');
