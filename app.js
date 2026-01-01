@@ -85,7 +85,11 @@ const translations = {
             minsAgo: 'm geleden',
             minsAhead: '+${m}m',
             weather: 'Weer',
-            timelineNow: 'Nu'
+            timelineNow: 'Nu',
+            settings: 'Instellingen',
+            settingsLocation: 'Locatie',
+            settingsLocationDesc: 'Zoek een stad of gebruik je huidige locatie.',
+            useMyLocation: 'Gebruik mijn locatie'
         },
         // Wind directions
         windDir: {
@@ -198,7 +202,11 @@ const translations = {
             minsAgo: 'm ago',
             minsAhead: '+${m}m',
             weather: 'Weather',
-            timelineNow: 'Now'
+            timelineNow: 'Now',
+            settings: 'Settings',
+            settingsLocation: 'Location',
+            settingsLocationDesc: 'Search for a city or use your current location.',
+            useMyLocation: 'Use my location'
         },
         // Wind directions
         windDir: {
@@ -381,7 +389,16 @@ const elements = {
     legendHeavy: document.getElementById('legendHeavy'),
     legendIntense: document.getElementById('legendIntense'),
     legendPast: document.getElementById('legendPast'),
-    legendFuture: document.getElementById('legendFuture')
+    legendFuture: document.getElementById('legendFuture'),
+    // Settings modal
+    settingsBtn: document.getElementById('settingsBtn'),
+    settingsModal: document.getElementById('settingsModal'),
+    closeSettingsBtn: document.getElementById('closeSettingsBtn'),
+    useMyLocationBtn: document.getElementById('useMyLocationBtn'),
+    settingsTitle: document.getElementById('settingsTitle'),
+    settingsLocationTitle: document.getElementById('settingsLocationTitle'),
+    settingsLocationDesc: document.getElementById('settingsLocationDesc'),
+    useMyLocationText: document.getElementById('useMyLocationText')
 };
 
 // Initialize the app
@@ -399,13 +416,32 @@ async function init() {
     updateUILanguage();
     setInterval(updateDateTime, 60000);
     
-    // Try to load saved location or detect
+    // Try to load saved location or auto-detect current location
     const savedLocation = localStorage.getItem('weatherLocation');
     if (savedLocation) {
         state.currentLocation = JSON.parse(savedLocation);
         await fetchWeather();
     } else {
+        // Default: auto-detect current location
         await detectLocation();
+    }
+}
+
+// Settings modal functions
+function openSettings() {
+    elements.settingsModal.classList.remove('hidden');
+    if (elements.locationSearch) {
+        elements.locationSearch.focus();
+    }
+}
+
+function closeSettings() {
+    elements.settingsModal.classList.add('hidden');
+    if (elements.searchSuggestions) {
+        elements.searchSuggestions.innerHTML = '';
+    }
+    if (elements.locationSearch) {
+        elements.locationSearch.value = '';
     }
 }
 
@@ -513,6 +549,12 @@ function updateUILanguage() {
     if (elements.installText) elements.installText.textContent = t('ui.installPrompt');
     if (elements.installBtn) elements.installBtn.textContent = t('ui.install');
     if (elements.dismissBtn) elements.dismissBtn.textContent = t('ui.notNow');
+    
+    // Update settings modal
+    if (elements.settingsTitle) elements.settingsTitle.textContent = t('ui.settings');
+    if (elements.settingsLocationTitle) elements.settingsLocationTitle.textContent = t('ui.settingsLocation');
+    if (elements.settingsLocationDesc) elements.settingsLocationDesc.textContent = t('ui.settingsLocationDesc');
+    if (elements.useMyLocationText) elements.useMyLocationText.textContent = t('ui.useMyLocation');
 }
 
 // Register Service Worker
@@ -597,8 +639,36 @@ function showTabContent() {
 
 // Setup Event Listeners
 function setupEventListeners() {
-    // Location button
+    // Location button - also detects location
     elements.locationBtn.addEventListener('click', detectLocation);
+    
+    // Settings modal
+    if (elements.settingsBtn) {
+        elements.settingsBtn.addEventListener('click', openSettings);
+    }
+    if (elements.closeSettingsBtn) {
+        elements.closeSettingsBtn.addEventListener('click', closeSettings);
+    }
+    if (elements.settingsModal) {
+        elements.settingsModal.addEventListener('click', (e) => {
+            if (e.target === elements.settingsModal) {
+                closeSettings();
+            }
+        });
+    }
+    if (elements.useMyLocationBtn) {
+        elements.useMyLocationBtn.addEventListener('click', async () => {
+            closeSettings();
+            await detectLocation();
+        });
+    }
+    
+    // Escape key to close modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && elements.settingsModal && !elements.settingsModal.classList.contains('hidden')) {
+            closeSettings();
+        }
+    });
     
     // Language toggle
     if (elements.langToggle) {
@@ -609,16 +679,22 @@ function setupEventListeners() {
     }
     
     // Search functionality
-    elements.searchBtn.addEventListener('click', handleSearch);
-    elements.locationSearch.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') handleSearch();
-    });
-    elements.locationSearch.addEventListener('input', debounce(handleSearchInput, 300));
+    if (elements.searchBtn) {
+        elements.searchBtn.addEventListener('click', handleSearch);
+    }
+    if (elements.locationSearch) {
+        elements.locationSearch.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSearch();
+        });
+        elements.locationSearch.addEventListener('input', debounce(handleSearchInput, 300));
+    }
     
     // Close suggestions when clicking outside
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.search-section')) {
-            elements.searchSuggestions.innerHTML = '';
+        if (!e.target.closest('.search-container') && !e.target.closest('.search-suggestions')) {
+            if (elements.searchSuggestions) {
+                elements.searchSuggestions.innerHTML = '';
+            }
         }
     });
     
@@ -752,6 +828,7 @@ async function detectLocation() {
 
 // Handle search input for suggestions
 async function handleSearchInput() {
+    if (!elements.locationSearch || !elements.searchSuggestions) return;
     const query = elements.locationSearch.value.trim();
     
     if (query.length < 2) {
@@ -805,6 +882,7 @@ function renderSuggestions(results) {
             localStorage.setItem('weatherLocation', JSON.stringify(state.currentLocation));
             elements.searchSuggestions.innerHTML = '';
             elements.locationSearch.value = '';
+            closeSettings();
             fetchWeather();
         });
     });
@@ -812,10 +890,12 @@ function renderSuggestions(results) {
 
 // Handle search button click
 async function handleSearch() {
+    if (!elements.locationSearch) return;
     const query = elements.locationSearch.value.trim();
     if (!query) return;
     
     showLoading();
+    closeSettings();
     
     try {
         const response = await fetch(
@@ -833,8 +913,8 @@ async function handleSearch() {
             };
             
             localStorage.setItem('weatherLocation', JSON.stringify(state.currentLocation));
-            elements.searchSuggestions.innerHTML = '';
-            elements.locationSearch.value = '';
+            if (elements.searchSuggestions) elements.searchSuggestions.innerHTML = '';
+            if (elements.locationSearch) elements.locationSearch.value = '';
             await fetchWeather();
         } else {
             showError('City not found. Please try a different search.');
