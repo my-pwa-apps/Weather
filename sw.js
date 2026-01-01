@@ -1,9 +1,9 @@
 /**
- * Service Worker for Weather Expectations PWA
+ * Service Worker for Weather PWA
  * Handles caching and offline functionality
  */
 
-const CACHE_NAME = 'weather-v7';
+const CACHE_NAME = 'weather-v8';
 const STATIC_ASSETS = [
     '/',
     '/index.html',

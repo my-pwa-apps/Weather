@@ -19,15 +19,12 @@
     <meta property="og:description" content="Je persoonlijke weer assistent">
     <meta property="og:type" content="website">
     <meta property="og:image" content="icons/icon-512.png">
-    <title>Weer Verwachting</title>
+    <title>Weer</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -72,20 +69,20 @@
         </div>
 
         <!-- Tab Navigation -->
-        <nav class="tab-navigation hidden" id="tabNavigation">
-            <button class="tab-btn active" data-tab="current" aria-selected="true">
+        <nav class="tab-navigation hidden" id="tabNavigation" role="tablist">
+            <button class="tab-btn active" data-tab="current" role="tab" aria-selected="true">
                 <span class="tab-icon">🌡️</span>
                 <span class="tab-label" id="tabNow">Nu</span>
             </button>
-            <button class="tab-btn" data-tab="hourly" aria-selected="false">
+            <button class="tab-btn" data-tab="hourly" role="tab" aria-selected="false">
                 <span class="tab-icon">⏰</span>
                 <span class="tab-label" id="tabHourly">Per uur</span>
             </button>
-            <button class="tab-btn" data-tab="daily" aria-selected="false">
+            <button class="tab-btn" data-tab="daily" role="tab" aria-selected="false">
                 <span class="tab-icon">📅</span>
                 <span class="tab-label" id="tab7Day">7-dagen</span>
             </button>
-            <button class="tab-btn" data-tab="radar" aria-selected="false">
+            <button class="tab-btn" data-tab="radar" role="tab" aria-selected="false">
                 <span class="tab-icon">🗺️</span>
                 <span class="tab-label" id="tabRadar">Radar</span>
             </button>
@@ -187,7 +184,7 @@
                                     <rect x="14" y="4" width="4" height="16"></rect>
                                 </svg>
                             </button>
-                            <input type="range" id="timelineSlider" class="timeline-slider" min="0" max="12" value="6">
+                            <input type="range" id="timelineSlider" class="timeline-slider" min="0" max="12" value="6" aria-label="Timeline slider">
                             <span class="timeline-time" id="timelineTime">Nu</span>
                         </div>
                         <div class="timeline-legend">
@@ -199,10 +196,10 @@
                     <div class="precipitation-legend">
                         <span class="legend-title" id="legendIntensity">Intensiteit:</span>
                         <div class="legend-scale">
-                            <div class="legend-item" id="legendLight" style="background: #00ff00;">Licht</div>
-                            <div class="legend-item" id="legendModerate" style="background: #ffff00;">Matig</div>
-                            <div class="legend-item" id="legendHeavy" style="background: #ff8800;">Zwaar</div>
-                            <div class="legend-item" id="legendIntense" style="background: #ff0000;">Intens</div>
+                            <div class="legend-item legend-light" id="legendLight">Licht</div>
+                            <div class="legend-item legend-moderate" id="legendModerate">Matig</div>
+                            <div class="legend-item legend-heavy" id="legendHeavy">Zwaar</div>
+                            <div class="legend-item legend-intense" id="legendIntense">Intens</div>
                         </div>
                     </div>
                 </div>

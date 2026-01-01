@@ -1,41 +1,62 @@
-/* CSS Variables for theming */
+/* ========================================
+   FLUENT DESIGN WEATHER APP
+   Optimized for mobile viewport fitting
+   ======================================== */
+
+/* CSS Variables - Fluent Design System */
 :root {
+    /* Fluent Acrylic colors */
+    --acrylic-bg: rgba(255, 255, 255, 0.7);
+    --acrylic-dark: rgba(32, 32, 32, 0.7);
+    
+    /* Primary gradient */
+    --primary: #0078d4;
+    --primary-light: #50a3e5;
     --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    
+    /* Weather backgrounds */
     --sunny-gradient: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
     --cloudy-gradient: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%);
     --rainy-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     --night-gradient: linear-gradient(135deg, #0c0c1e 0%, #1a1a3e 50%, #2d2d5a 100%);
     
-    --bg-primary: #f8fafc;
-    --bg-secondary: #ffffff;
-    --bg-card: rgba(255, 255, 255, 0.95);
-    --text-primary: #1e293b;
-    --text-secondary: #64748b;
-    --text-muted: #94a3b8;
-    --border-color: rgba(0, 0, 0, 0.08);
+    /* Semantic colors */
+    --bg-primary: #f3f3f3;
+    --bg-card: rgba(255, 255, 255, 0.85);
+    --text-primary: #1a1a1a;
+    --text-secondary: #616161;
+    --text-muted: #8a8a8a;
+    --border-color: rgba(0, 0, 0, 0.06);
     
-    /* Enhanced floating shadows */
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
-    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
-    --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
-    --shadow-glow: 0 0 40px rgba(102, 126, 234, 0.3);
-    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+    /* Fluent shadows - subtle and layered */
+    --shadow-2: 0 1px 2px rgba(0,0,0,0.07);
+    --shadow-4: 0 2px 4px rgba(0,0,0,0.08);
+    --shadow-8: 0 4px 8px rgba(0,0,0,0.08);
+    --shadow-16: 0 8px 16px rgba(0,0,0,0.1);
+    --shadow-card: 0 2px 8px rgba(0,0,0,0.08);
     
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
-    --radius-full: 9999px;
+    /* Radii - Fluent uses softer corners */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 999px;
     
-    --transition-fast: 150ms ease;
-    --transition-normal: 250ms ease;
-    --transition-slow: 350ms ease;
+    /* Transitions - Fluent motion */
+    --ease-fluent: cubic-bezier(0.4, 0, 0.2, 1);
+    --duration-fast: 100ms;
+    --duration-normal: 200ms;
+    --duration-slow: 300ms;
+    
+    /* Spacing scale */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 16px;
+    --space-xl: 24px;
 }
 
-/* Reset & Base Styles */
+/* Reset */
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -47,122 +68,35 @@ html {
     -webkit-tap-highlight-color: transparent;
 }
 
+/* Base body - fill viewport exactly */
 body {
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
     background: var(--primary-gradient);
-    min-height: 100vh;
-    min-height: 100dvh;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
     color: var(--text-primary);
-    line-height: 1.5;
-    overflow-x: hidden;
+    line-height: 1.4;
 }
 
-/* App Container */
+/* App Container - fixed height, flex layout */
 .app-container {
-    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    max-width: 500px;
     margin: 0 auto;
-    padding: 16px;
-    min-height: 100vh;
-    min-height: 100dvh;
+    padding: var(--space-md);
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
 }
 
 /* ========================================
-   TAB NAVIGATION
+   HEADER - Compact
    ======================================== */
-.tab-navigation {
-    display: flex;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: var(--radius-xl);
-    padding: 8px;
-    margin-bottom: 24px;
-    box-shadow: var(--shadow-float), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.tab-btn {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 12px 8px;
-    border: none;
-    border-radius: var(--radius-lg);
-    background: transparent;
-    color: rgba(255, 255, 255, 0.8);
-    font-family: inherit;
-    font-size: 0.75rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-
-.tab-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.tab-btn.active {
-    background: rgba(255, 255, 255, 0.98);
-    color: var(--text-primary);
-    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255, 255, 255, 0.5);
-    transform: translateY(-1px);
-}
-
-.tab-icon {
-    font-size: 1.5rem;
-    line-height: 1;
-}
-
-.tab-label {
-    white-space: nowrap;
-}
-
-/* Tab Content Container */
-.tab-content-container {
-    position: relative;
-}
-
-.tab-panel {
-    display: none;
-    animation: fadeIn 0.3s ease;
-}
-
-.tab-panel.active {
-    display: block;
-}
-
-@keyframes fadeIn {
-    from { 
-        opacity: 0; 
-        transform: translateY(10px);
-    }
-    to { 
-        opacity: 1; 
-        transform: translateY(0);
-    }
-}
-
-/* Standalone loading state (outside tabs) */
-.loading-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 20px;
-    color: white;
-    text-align: center;
-}
-
-.loading-state.hidden {
-    display: none;
-}
-
-/* Header */
 .header {
-    margin-bottom: 20px;
+    flex-shrink: 0;
+    margin-bottom: var(--space-sm);
 }
 
 .header-content {
@@ -172,269 +106,243 @@ body {
 }
 
 .app-title {
-    font-size: 1.75rem;
+    font-size: 1.25rem;
     font-weight: 600;
     color: white;
     display: flex;
     align-items: center;
-    gap: 8px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    gap: 6px;
 }
 
 .weather-icon {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
 }
 
 .header-buttons {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+}
+
+/* Fluent button style - subtle glass effect */
+.lang-toggle-btn,
+.location-btn,
+.settings-btn {
+    background: rgba(255, 255, 255, 0.15);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-md);
+    color: white;
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-fluent);
 }
 
 .lang-toggle-btn {
-    background: rgba(255, 255, 255, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: var(--radius-lg);
-    padding: 10px 14px;
-    color: white;
-    font-family: inherit;
-    font-size: 0.85rem;
+    padding: 6px 10px;
+    font-size: 0.75rem;
     font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.lang-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.35);
-    transform: scale(1.05) translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.lang-toggle-btn:active {
-    transform: scale(0.98);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.location-btn {
-    background: rgba(255, 255, 255, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: var(--radius-full);
-    padding: 12px;
-    color: white;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.location-btn:hover {
-    background: rgba(255, 255, 255, 0.35);
-    transform: scale(1.05) translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.location-btn:active {
-    transform: scale(0.98);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* Search Section */
-.search-section {
-    margin-bottom: 20px;
-    position: relative;
-}
-
-.search-container {
-    display: flex;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.98);
-    border-radius: var(--radius-xl);
-    padding: 6px;
-    box-shadow: var(--shadow-float);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    transition: all var(--transition-normal);
-}
-
-.search-container:focus-within {
-    box-shadow: var(--shadow-xl), var(--shadow-glow);
-    transform: translateY(-2px);
-}
-
-.search-input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    padding: 12px 16px;
-    font-size: 1rem;
     font-family: inherit;
-    color: var(--text-primary);
-    outline: none;
 }
 
-.search-input::placeholder {
-    color: var(--text-muted);
-}
-
-.search-btn {
-    background: var(--primary-gradient);
-    border: none;
-    border-radius: var(--radius-lg);
-    padding: 12px 16px;
-    color: white;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-
-.search-btn:hover {
-    transform: scale(1.05);
-    box-shadow: var(--shadow-md);
-}
-
-.search-btn:active {
-    transform: scale(0.95);
-}
-
-/* Search Suggestions */
-.search-suggestions {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border-radius: var(--radius-lg);
-    margin-top: 8px;
-    box-shadow: var(--shadow-xl);
-    overflow: hidden;
-    z-index: 100;
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.search-suggestions:empty {
-    display: none;
-}
-
-.suggestion-item {
-    padding: 14px 16px;
-    cursor: pointer;
-    transition: background var(--transition-fast);
+.location-btn,
+.settings-btn {
+    padding: 8px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    border-bottom: 1px solid var(--border-color);
+    justify-content: center;
 }
 
-.suggestion-item:last-child {
-    border-bottom: none;
+.location-btn svg,
+.settings-btn svg {
+    width: 18px;
+    height: 18px;
 }
 
-.suggestion-item:hover {
-    background: #f1f5f9;
+.lang-toggle-btn:hover,
+.location-btn:hover,
+.settings-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
 }
 
-.suggestion-icon {
-    font-size: 1.25rem;
+.lang-toggle-btn:active,
+.location-btn:active,
+.settings-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0.96);
 }
 
-.suggestion-text {
-    flex: 1;
-}
-
-.suggestion-city {
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.suggestion-country {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
-
-/* Location Display */
+/* ========================================
+   LOCATION DISPLAY - Minimal
+   ======================================== */
 .location-display {
+    flex-shrink: 0;
     text-align: center;
-    margin-bottom: 24px;
     color: white;
+    margin-bottom: var(--space-sm);
 }
 
 .location-name {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     font-weight: 600;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .location-time {
-    font-size: 0.9rem;
-    opacity: 0.9;
-    margin-top: 4px;
+    font-size: 0.75rem;
+    opacity: 0.85;
+    margin-top: 2px;
 }
 
-/* Main Weather Card */
-.weather-main {
-    background: var(--bg-card);
-    border-radius: var(--radius-xl);
-    padding: 32px 24px;
-    box-shadow: var(--shadow-float);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+/* ========================================
+   LOADING STATE
+   ======================================== */
+.loading-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
 }
 
-/* Forecast sections inside tabs don't need bottom margin */
-.tab-panel .forecast-section,
-.tab-panel .map-section {
-    margin-bottom: 0;
+.loading-state.hidden {
+    display: none;
 }
 
 .loading-spinner {
-    width: 48px;
-    height: 48px;
-    border: 4px solid rgba(255, 255, 255, 0.3);
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
     border-top-color: white;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 16px;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: var(--space-md);
+}
+
+.loading-spinner.small {
+    width: 24px;
+    height: 24px;
+    border-width: 2px;
 }
 
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
 
-/* Weather Content */
-.weather-content {
-    transition: opacity var(--transition-normal);
+/* ========================================
+   TAB NAVIGATION - Compact Fluent Pills
+   ======================================== */
+.tab-navigation {
+    flex-shrink: 0;
+    display: flex;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.12);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
+    padding: 4px;
+    margin-bottom: var(--space-md);
+}
+
+.tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 4px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: inherit;
+    font-size: 0.65rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-fluent);
+}
+
+.tab-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.tab-btn.active {
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-4);
+}
+
+.tab-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.tab-label {
+    white-space: nowrap;
+}
+
+/* ========================================
+   TAB CONTENT - Fill remaining space
+   ======================================== */
+.tab-content-container {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.tab-panel {
+    display: none;
+    height: 100%;
+    animation: fadeIn 0.2s var(--ease-fluent);
+}
+
+.tab-panel.active {
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================
+   CURRENT WEATHER TAB - Compact
+   ======================================== */
+.weather-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    overflow: hidden;
 }
 
 .current-weather {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: auto;
+    padding-bottom: var(--space-md);
 }
 
 .weather-icon-large {
-    font-size: 5rem;
+    font-size: 3.5rem;
     line-height: 1;
-    margin-bottom: 16px;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
-    animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+    margin-bottom: var(--space-sm);
 }
 
 .temperature-display {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .temperature {
-    font-size: 4.5rem;
-    font-weight: 700;
+    font-size: 3.5rem;
+    font-weight: 600;
     line-height: 1;
     background: var(--primary-gradient);
     -webkit-background-clip: text;
@@ -443,95 +351,94 @@ body {
 }
 
 .temperature-unit {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 500;
     color: var(--text-secondary);
-    margin-top: 8px;
+    margin-top: 6px;
 }
 
 .weather-description {
-    font-size: 1.25rem;
+    font-size: 1rem;
     color: var(--text-secondary);
-    text-transform: capitalize;
     font-weight: 500;
 }
 
-/* Weather Details Grid */
+/* Weather Details Grid - Compact */
 .weather-details {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: var(--space-sm);
+    margin-top: auto;
 }
 
 .detail-card {
-    background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
-    border-radius: var(--radius-lg);
-    padding: 16px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
     display: flex;
     align-items: center;
-    gap: 12px;
-    transition: all var(--transition-normal);
-    box-shadow: var(--shadow-md);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-}
-
-.detail-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
+    gap: var(--space-sm);
 }
 
 .detail-icon {
-    font-size: 1.75rem;
+    font-size: 1.25rem;
 }
 
 .detail-info {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .detail-value {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--text-primary);
-    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .detail-value small {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 500;
-    opacity: 0.75;
+    opacity: 0.7;
 }
 
 .detail-label {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: var(--text-secondary);
 }
 
-/* Forecast Sections */
+/* ========================================
+   FORECAST SECTION - Scrollable
+   ======================================== */
 .forecast-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     background: var(--bg-card);
-    border-radius: var(--radius-xl);
-    padding: 24px;
-    margin-bottom: 24px;
-    box-shadow: var(--shadow-float);
-    backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    overflow: hidden;
 }
 
 .section-title {
-    font-size: 1rem;
+    flex-shrink: 0;
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 16px;
+    margin-bottom: var(--space-md);
 }
 
-/* Hourly Forecast */
+/* Hourly Scroll */
 .hourly-scroll {
     display: flex;
-    gap: 12px;
+    gap: var(--space-sm);
     overflow-x: auto;
-    padding-bottom: 8px;
+    padding-bottom: var(--space-sm);
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -542,32 +449,22 @@ body {
 
 .hourly-item {
     flex-shrink: 0;
-    background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
-    border-radius: var(--radius-lg);
-    padding: 16px 20px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: var(--radius-md);
+    padding: var(--space-md) var(--space-lg);
     text-align: center;
-    min-width: 80px;
-    transition: all var(--transition-normal);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-}
-
-.hourly-item:hover {
-    transform: scale(1.05) translateY(-4px);
-    box-shadow: var(--shadow-lg);
+    min-width: 64px;
 }
 
 .hourly-item.now {
     background: var(--primary-gradient);
     color: white;
-    box-shadow: var(--shadow-md), 0 0 20px rgba(102, 126, 234, 0.3);
-    border: none;
 }
 
 .hourly-time {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: var(--text-secondary);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .hourly-item.now .hourly-time {
@@ -575,200 +472,89 @@ body {
 }
 
 .hourly-icon {
-    font-size: 1.5rem;
-    margin-bottom: 8px;
+    font-size: 1.25rem;
+    margin-bottom: 4px;
 }
 
 .hourly-temp {
-    font-size: 1rem;
+    font-size: 0.85rem;
     font-weight: 600;
 }
 
-/* Daily Forecast */
+/* Daily Forecast - Scrollable */
 .daily-forecast {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-sm);
+    overflow-y: auto;
+    scrollbar-width: thin;
 }
 
 .daily-item {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    padding: 14px 18px;
-    background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
-    border-radius: var(--radius-lg);
-    transition: all var(--transition-normal);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-}
-
-.daily-item:hover {
-    transform: translateX(4px) translateY(-2px);
-    box-shadow: var(--shadow-md);
+    padding: var(--space-md);
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: var(--radius-md);
 }
 
 .daily-day {
     flex: 1;
+    font-size: 0.85rem;
     font-weight: 500;
     color: var(--text-primary);
 }
 
 .daily-icon {
-    font-size: 1.5rem;
-    margin: 0 16px;
+    font-size: 1.25rem;
+    margin: 0 var(--space-md);
 }
 
 .daily-temps {
     display: flex;
-    gap: 8px;
+    gap: var(--space-sm);
     align-items: center;
 }
 
 .daily-high {
+    font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text-primary);
 }
 
 .daily-low {
+    font-size: 0.85rem;
     color: var(--text-muted);
 }
 
-/* Error State */
-.error-state {
-    text-align: center;
-    padding: 48px 24px;
-    background: var(--bg-card);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-float);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-}
-
-.error-icon {
-    font-size: 4rem;
-    margin-bottom: 16px;
-}
-
-.error-state h3 {
-    font-size: 1.25rem;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-}
-
-.error-state p {
-    color: var(--text-secondary);
-    margin-bottom: 24px;
-}
-
-.retry-btn {
-    background: var(--primary-gradient);
-    color: white;
-    border: none;
-    border-radius: var(--radius-full);
-    padding: 12px 32px;
-    font-size: 1rem;
-    font-weight: 500;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-
-.retry-btn:hover {
-    transform: scale(1.05);
-    box-shadow: var(--shadow-lg);
-}
-
-/* Install Prompt */
-.install-prompt {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    padding: 20px;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-}
-
-.install-content {
-    max-width: 480px;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-}
-
-.install-content p {
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.install-buttons {
-    display: flex;
-    gap: 8px;
-}
-
-.install-btn {
-    background: var(--primary-gradient);
-    color: white;
-    border: none;
-    border-radius: var(--radius-full);
-    padding: 10px 20px;
-    font-weight: 500;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-
-.install-btn:hover {
-    transform: scale(1.05);
-}
-
-.dismiss-btn {
-    background: transparent;
-    color: var(--text-secondary);
-    border: none;
-    padding: 10px 16px;
-    font-family: inherit;
-    cursor: pointer;
-}
-
-/* Utility Classes */
-.hidden {
-    display: none !important;
-}
-
 /* ========================================
-   PRECIPITATION MAP STYLES
+   MAP SECTION - Compact Radar
    ======================================== */
 .map-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     background: var(--bg-card);
-    border-radius: var(--radius-xl);
-    padding: 24px;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow-float);
+    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    transition: box-shadow var(--transition-normal);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    overflow: hidden;
 }
 
-.map-section:hover {
-    box-shadow: var(--shadow-float), 0 0 30px rgba(102, 126, 234, 0.15);
+.tab-panel .forecast-section,
+.tab-panel .map-section {
+    margin-bottom: 0;
 }
 
 .map-header {
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-    gap: 12px;
+    margin-bottom: var(--space-md);
+    gap: var(--space-sm);
 }
 
 .map-header .section-title {
@@ -778,67 +564,56 @@ body {
 .map-controls {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-sm);
 }
 
 .speed-label {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     color: var(--text-secondary);
     font-weight: 500;
 }
 
 .speed-select {
-    padding: 10px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: var(--radius-lg);
-    background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: white;
     color: var(--text-primary);
     font-family: inherit;
-    font-size: 0.85rem;
-    font-weight: 500;
+    font-size: 0.75rem;
     cursor: pointer;
-    transition: all var(--transition-normal);
     outline: none;
-    box-shadow: var(--shadow-sm);
-}
-
-.speed-select:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
 }
 
 .speed-select:focus {
-    box-shadow: var(--shadow-md), 0 0 0 3px rgba(102, 126, 234, 0.2);
     border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
 }
 
 .map-control-btn {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 10px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    gap: 4px;
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-full);
-    background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
+    background: white;
     color: var(--text-secondary);
     font-family: inherit;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all var(--transition-normal);
-    box-shadow: var(--shadow-sm);
+    transition: all var(--duration-fast) var(--ease-fluent);
 }
 
 .map-control-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
+    background: var(--bg-primary);
 }
 
 .map-control-btn.active {
-    background: var(--primary-gradient);
+    background: var(--primary);
     color: white;
-    border: none;
-    box-shadow: var(--shadow-md), 0 0 20px rgba(102, 126, 234, 0.3);
+    border-color: var(--primary);
 }
 
 .control-label {
@@ -846,17 +621,18 @@ body {
 }
 
 .map-container {
+    flex: 1;
     position: relative;
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     overflow: hidden;
     background: #1a1a2e;
-    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 150px;
 }
 
 .precip-map {
     width: 100%;
-    height: 300px;
+    height: 100%;
+    min-height: 150px;
     z-index: 1;
 }
 
@@ -873,7 +649,7 @@ body {
     background: rgba(26, 26, 46, 0.9);
     color: white;
     z-index: 10;
-    transition: opacity var(--transition-normal);
+    transition: opacity var(--duration-normal);
 }
 
 .map-overlay.hidden {
@@ -881,25 +657,21 @@ body {
     pointer-events: none;
 }
 
-.loading-spinner.small {
-    width: 32px;
-    height: 32px;
-    border-width: 3px;
-}
-
+/* Timeline Controls - Compact */
 .map-timeline {
-    margin-top: 16px;
+    flex-shrink: 0;
+    margin-top: var(--space-md);
 }
 
 .timeline-controls {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-sm);
 }
 
 .timeline-btn {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     border: none;
     border-radius: 50%;
     background: var(--primary-gradient);
@@ -908,76 +680,71 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--transition-normal);
     flex-shrink: 0;
-    box-shadow: var(--shadow-md), 0 0 15px rgba(102, 126, 234, 0.25);
+    transition: transform var(--duration-fast) var(--ease-fluent);
 }
 
 .timeline-btn:hover {
-    transform: scale(1.1) translateY(-2px);
-    box-shadow: var(--shadow-lg), 0 0 25px rgba(102, 126, 234, 0.35);
+    transform: scale(1.05);
+}
+
+.timeline-btn:active {
+    transform: scale(0.95);
 }
 
 .timeline-slider {
     flex: 1;
-    height: 10px;
+    height: 6px;
     -webkit-appearance: none;
     appearance: none;
     background: linear-gradient(90deg, #4facfe 0%, #667eea 50%, #f5576c 100%);
     border-radius: var(--radius-full);
     outline: none;
     cursor: pointer;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
 .timeline-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: white;
     cursor: pointer;
-    box-shadow: var(--shadow-lg), 0 0 10px rgba(102, 126, 234, 0.3);
-    border: 3px solid #667eea;
-    transition: all var(--transition-fast);
-}
-
-.timeline-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.1);
-    box-shadow: var(--shadow-lg), 0 0 20px rgba(102, 126, 234, 0.4);
+    box-shadow: var(--shadow-8);
+    border: 2px solid var(--primary);
 }
 
 .timeline-slider::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: white;
     cursor: pointer;
-    box-shadow: var(--shadow-lg), 0 0 10px rgba(102, 126, 234, 0.3);
-    border: 3px solid #667eea;
+    box-shadow: var(--shadow-8);
+    border: 2px solid var(--primary);
 }
 
 .timeline-time {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--text-primary);
-    min-width: 60px;
+    min-width: 50px;
     text-align: right;
 }
 
 .timeline-legend {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-    font-size: 0.75rem;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+    font-size: 0.65rem;
     color: var(--text-muted);
 }
 
 .legend-bar {
     flex: 1;
-    height: 4px;
+    height: 3px;
     background: linear-gradient(90deg, #4facfe 0%, #667eea 50%, #f5576c 100%);
     border-radius: var(--radius-full);
 }
@@ -985,59 +752,90 @@ body {
 .precipitation-legend {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 12px;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
     flex-wrap: wrap;
 }
 
 .legend-title {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     font-weight: 500;
     color: var(--text-secondary);
 }
 
 .legend-scale {
     display: flex;
-    gap: 4px;
+    gap: 2px;
 }
 
 .legend-item {
-    padding: 4px 10px;
+    padding: 2px 6px;
     border-radius: var(--radius-sm);
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     font-weight: 500;
     color: #000;
-    text-shadow: 0 0 2px rgba(255,255,255,0.5);
 }
 
+.legend-light { background: #00ff00; }
+.legend-moderate { background: #ffff00; }
+.legend-heavy { background: #ff8800; }
+.legend-intense { background: #ff0000; }
+
 /* ========================================
-   SETTINGS BUTTON
+   ERROR STATE
    ======================================== */
-.settings-btn {
-    background: rgba(255, 255, 255, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: var(--radius-full);
-    padding: 12px;
+.error-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-xl);
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+}
+
+.error-icon {
+    font-size: 3rem;
+    margin-bottom: var(--space-md);
+}
+
+.error-state h3 {
+    font-size: 1rem;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.error-state p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-lg);
+}
+
+.retry-btn {
+    background: var(--primary-gradient);
     color: white;
+    border: none;
+    border-radius: var(--radius-full);
+    padding: 10px 24px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    font-family: inherit;
     cursor: pointer;
-    transition: all var(--transition-normal);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform var(--duration-fast) var(--ease-fluent);
 }
 
-.settings-btn:hover {
-    background: rgba(255, 255, 255, 0.35);
-    transform: scale(1.05) translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+.retry-btn:hover {
+    transform: scale(1.02);
 }
 
-.settings-btn:active {
+.retry-btn:active {
     transform: scale(0.98);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* ========================================
-   SETTINGS MODAL
+   SETTINGS MODAL - Fluent Dialog
    ======================================== */
 .modal-overlay {
     position: fixed;
@@ -1045,15 +843,16 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.4);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    padding: 20px;
+    padding: var(--space-lg);
     opacity: 1;
-    transition: opacity var(--transition-normal);
+    transition: opacity var(--duration-normal) var(--ease-fluent);
 }
 
 .modal-overlay.hidden {
@@ -1063,32 +862,33 @@ body {
 
 .modal-container {
     background: var(--bg-card);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
     border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-float), 0 0 60px rgba(102, 126, 234, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: var(--shadow-16);
     width: 100%;
-    max-width: 420px;
-    max-height: 90vh;
+    max-width: 360px;
+    max-height: 80vh;
     overflow: hidden;
-    transform: scale(1) translateY(0);
-    transition: transform var(--transition-normal);
+    transform: scale(1);
+    transition: transform var(--duration-normal) var(--ease-fluent);
 }
 
 .modal-overlay.hidden .modal-container {
-    transform: scale(0.95) translateY(20px);
+    transform: scale(0.95);
 }
 
 .modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 24px;
+    padding: var(--space-lg);
     background: var(--primary-gradient);
     color: white;
 }
 
 .modal-title {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 600;
     margin: 0;
 }
@@ -1097,28 +897,32 @@ body {
     background: rgba(255, 255, 255, 0.2);
     border: none;
     border-radius: var(--radius-full);
-    padding: 8px;
+    padding: 6px;
     color: white;
     cursor: pointer;
-    transition: all var(--transition-normal);
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background var(--duration-fast) var(--ease-fluent);
 }
 
 .modal-close-btn:hover {
     background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
+}
+
+.modal-close-btn svg {
+    width: 20px;
+    height: 20px;
 }
 
 .modal-content {
-    padding: 24px;
+    padding: var(--space-lg);
     overflow-y: auto;
-    max-height: calc(90vh - 80px);
+    max-height: calc(80vh - 60px);
 }
 
 .settings-section {
-    margin-bottom: 24px;
+    margin-bottom: var(--space-lg);
 }
 
 .settings-section:last-child {
@@ -1126,31 +930,68 @@ body {
 }
 
 .settings-section-title {
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin: 0 0 8px 0;
+    margin: 0 0 var(--space-xs) 0;
 }
 
 .settings-description {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
-    margin: 0 0 16px 0;
-    line-height: 1.5;
+    margin: 0 0 var(--space-md) 0;
 }
 
+/* Search in modal */
 .modal-content .search-container {
-    margin-bottom: 8px;
+    display: flex;
+    gap: var(--space-sm);
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 4px;
+    margin-bottom: var(--space-sm);
+}
+
+.search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.search-btn {
+    background: var(--primary-gradient);
+    border: none;
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-btn svg {
+    width: 18px;
+    height: 18px;
 }
 
 .modal-content .search-suggestions {
     position: relative;
-    top: 0;
     background: white;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    margin-bottom: 16px;
-    max-height: 200px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+    max-height: 160px;
     overflow-y: auto;
 }
 
@@ -1158,340 +999,372 @@ body {
     display: none;
 }
 
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: var(--radius-md);
+    margin-top: var(--space-sm);
+    box-shadow: var(--shadow-16);
+    overflow: hidden;
+    z-index: 100;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.search-suggestions:empty {
+    display: none;
+}
+
+.suggestion-item {
+    padding: var(--space-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    border-bottom: 1px solid var(--border-color);
+    transition: background var(--duration-fast);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: var(--bg-primary);
+}
+
+.suggestion-icon {
+    font-size: 1rem;
+}
+
+.suggestion-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.suggestion-city {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.suggestion-country {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
 .use-location-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: var(--space-sm);
     width: 100%;
-    padding: 14px 20px;
-    background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
     color: var(--text-primary);
     font-family: inherit;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all var(--transition-normal);
-    box-shadow: var(--shadow-sm);
+    transition: background var(--duration-fast) var(--ease-fluent);
 }
 
 .use-location-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
-}
-
-.use-location-btn:active {
-    transform: translateY(0);
+    background: #e8e8e8;
 }
 
 .use-location-btn svg {
+    width: 16px;
+    height: 16px;
     color: var(--primary);
 }
 
 /* ========================================
-   DESKTOP RESPONSIVE LAYOUT
+   INSTALL PROMPT
+   ======================================== */
+.install-prompt {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: var(--space-lg);
+    box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    animation: slideUp 0.3s var(--ease-fluent);
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.install-content {
+    max-width: 400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+}
+
+.install-content p {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.install-buttons {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.install-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.dismiss-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+.hidden {
+    display: none !important;
+}
+
+/* ========================================
+   RESPONSIVE - Larger Screens
    ======================================== */
 @media (min-width: 768px) {
     .app-container {
-        padding: 24px;
-        max-width: 700px;
-    }
-    
-    .header-content {
         max-width: 600px;
-        margin: 0 auto;
-    }
-    
-    .search-section {
-        max-width: 500px;
-        margin-left: auto;
-        margin-right: auto;
-        margin-bottom: 32px;
-    }
-    
-    .location-display {
-        margin-bottom: 32px;
-    }
-    
-    .location-name {
-        font-size: 2rem;
-    }
-    
-    /* Tab navigation for desktop */
-    .tab-navigation {
-        max-width: 500px;
-        margin-left: auto;
-        margin-right: auto;
-        margin-bottom: 24px;
-    }
-    
-    .tab-btn {
-        flex-direction: row;
-        gap: 8px;
-        padding: 14px 16px;
-        font-size: 0.9rem;
-    }
-    
-    .tab-icon {
-        font-size: 1.25rem;
-    }
-    
-    .weather-main {
-        padding: 40px 32px;
-    }
-    
-    .weather-icon-large {
-        font-size: 6rem;
-    }
-    
-    .temperature {
-        font-size: 5.5rem;
-    }
-    
-    .weather-details {
-        grid-template-columns: repeat(4, 1fr);
-    }
-    
-    .forecast-section {
-        padding: 24px;
-    }
-    
-    .hourly-item {
-        min-width: 90px;
-        padding: 18px 24px;
-    }
-    
-    .daily-item {
-        padding: 16px 20px;
-    }
-    
-    /* Map on desktop */
-    .map-section {
-        padding: 24px;
-    }
-    
-    .precip-map {
-        height: 400px;
-    }
-    
-    .control-label {
-        display: inline;
-    }
-    
-    .map-control-btn {
-        padding: 10px 18px;
-    }
-}
-
-/* Large desktop */
-@media (min-width: 1024px) {
-    .app-container {
-        padding: 32px;
-    }
-    
-    .precip-map {
-        height: 450px;
-    }
-    
-    .weather-details {
-        gap: 20px;
-    }
-    
-    .detail-card {
-        padding: 20px;
-    }
-    
-    .detail-value {
-        font-size: 1.25rem;
-    }
-}
-
-/* Extra large screens */
-@media (min-width: 1400px) {
-    .precip-map {
-        height: 500px;
-    }
-}
-
-/* Responsive Adjustments - Small screens */
-@media (max-width: 380px) {
-    .app-container {
-        padding: 12px;
+        padding: var(--space-xl);
     }
     
     .app-title {
         font-size: 1.5rem;
     }
     
-    .temperature {
-        font-size: 3.5rem;
+    .location-name {
+        font-size: 1.35rem;
     }
     
-    .weather-icon-large {
-        font-size: 4rem;
-    }
-    
-    .weather-details {
-        gap: 10px;
-    }
-    
-    .detail-card {
-        padding: 12px;
-    }
-    
-    .precip-map {
-        height: 250px;
-    }
-    
-    .map-control-btn {
-        padding: 6px 10px;
+    .tab-btn {
+        flex-direction: row;
+        gap: var(--space-sm);
+        padding: 10px var(--space-md);
         font-size: 0.8rem;
     }
     
-    .timeline-btn {
-        width: 36px;
-        height: 36px;
+    .weather-icon-large {
+        font-size: 5rem;
     }
     
-    .legend-item {
-        padding: 3px 8px;
-        font-size: 0.65rem;
-    }
-}
-
-/* Medium mobile screens */
-@media (min-width: 380px) and (max-width: 480px) {
-    .precip-map {
-        height: 280px;
-    }
-}
-
-/* Tablet adjustments */
-@media (min-width: 481px) and (max-width: 767px) {
-    .app-container {
-        padding: 20px;
-        max-width: 600px;
-    }
-    
-    .weather-main {
-        padding: 36px 28px;
+    .temperature {
+        font-size: 5rem;
     }
     
     .weather-details {
         grid-template-columns: repeat(4, 1fr);
     }
     
-    .detail-card {
-        flex-direction: column;
-        text-align: center;
-        gap: 8px;
-    }
-    
-    .precip-map {
-        height: 350px;
+    .control-label {
+        display: inline;
     }
 }
 
-/* Dark Mode Support (based on time/weather) */
+/* Very small screens - extra compact */
+@media (max-height: 600px) {
+    .app-container {
+        padding: var(--space-sm);
+    }
+    
+    .header {
+        margin-bottom: var(--space-xs);
+    }
+    
+    .location-display {
+        margin-bottom: var(--space-xs);
+    }
+    
+    .location-name {
+        font-size: 1rem;
+    }
+    
+    .location-time {
+        display: none;
+    }
+    
+    .tab-navigation {
+        margin-bottom: var(--space-sm);
+    }
+    
+    .tab-btn {
+        padding: 6px 2px;
+    }
+    
+    .tab-icon {
+        font-size: 0.9rem;
+    }
+    
+    .tab-label {
+        font-size: 0.55rem;
+    }
+    
+    .weather-main,
+    .forecast-section,
+    .map-section {
+        padding: var(--space-md);
+    }
+    
+    .weather-icon-large {
+        font-size: 2.5rem;
+        margin-bottom: var(--space-xs);
+    }
+    
+    .temperature {
+        font-size: 2.5rem;
+    }
+    
+    .temperature-unit {
+        font-size: 1rem;
+    }
+    
+    .weather-description {
+        font-size: 0.85rem;
+    }
+    
+    .detail-card {
+        padding: var(--space-sm);
+    }
+    
+    .detail-icon {
+        font-size: 1rem;
+    }
+    
+    .detail-value {
+        font-size: 0.8rem;
+    }
+    
+    .detail-label {
+        font-size: 0.6rem;
+    }
+    
+    .section-title {
+        font-size: 0.8rem;
+        margin-bottom: var(--space-sm);
+    }
+    
+    .hourly-item {
+        padding: var(--space-sm) var(--space-md);
+        min-width: 54px;
+    }
+    
+    .hourly-icon {
+        font-size: 1rem;
+    }
+    
+    .hourly-temp {
+        font-size: 0.75rem;
+    }
+    
+    .daily-item {
+        padding: var(--space-sm);
+    }
+    
+    .timeline-btn {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .timeline-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+/* ========================================
+   DARK MODE / NIGHT MODE
+   ======================================== */
 body.night-mode {
-    --bg-card: rgba(30, 41, 59, 0.9);
+    --bg-card: rgba(30, 41, 59, 0.85);
     --text-primary: #f1f5f9;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
-}
-
-body.night-mode {
+    --border-color: rgba(255, 255, 255, 0.1);
+    --bg-primary: rgba(255, 255, 255, 0.05);
     background: var(--night-gradient);
 }
 
 body.night-mode .detail-card,
 body.night-mode .hourly-item:not(.now),
 body.night-mode .daily-item {
-    background: linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%);
+    background: rgba(255, 255, 255, 0.05);
 }
 
-body.night-mode .search-container {
+body.night-mode .modal-container {
     background: rgba(30, 41, 59, 0.95);
+}
+
+body.night-mode .modal-content .search-container {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 body.night-mode .search-input {
     color: var(--text-primary);
 }
 
-body.night-mode .search-suggestions {
-    background: #1e293b;
-}
-
-body.night-mode .suggestion-item:hover {
-    background: #334155;
-}
-
-body.night-mode .error-state {
-    background: rgba(30, 41, 59, 0.9);
-}
-
-body.night-mode .tab-navigation {
-    background: rgba(30, 41, 59, 0.5);
-}
-
-body.night-mode .tab-btn {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-body.night-mode .tab-btn.active {
+body.night-mode .modal-content .search-suggestions {
     background: rgba(30, 41, 59, 0.95);
-    color: var(--text-primary);
-}
-
-body.night-mode .map-section {
-    background: rgba(30, 41, 59, 0.9);
-}
-
-body.night-mode .map-control-btn:not(.active) {
-    background: linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%);
-    color: var(--text-secondary);
-}
-
-body.night-mode .timeline-slider {
-    background: linear-gradient(90deg, #4facfe 0%, #764ba2 50%, #f5576c 100%);
-}
-
-body.night-mode .legend-item {
-    color: #fff;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
-
-body.night-mode .modal-container {
-    background: var(--bg-card);
     border-color: rgba(255, 255, 255, 0.1);
 }
 
-body.night-mode .modal-content .search-container {
-    background: rgba(30, 30, 50, 0.9);
-}
-
-body.night-mode .modal-content .search-input {
-    background: transparent;
-    color: var(--text-primary);
-}
-
-body.night-mode .modal-content .search-suggestions {
-    background: rgba(30, 30, 50, 0.95);
+body.night-mode .suggestion-item:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 body.night-mode .use-location-btn {
-    background: linear-gradient(145deg, rgba(50, 50, 80, 0.9) 0%, rgba(40, 40, 70, 0.9) 100%);
+    background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
 }
 
 body.night-mode .speed-select {
-    background: linear-gradient(145deg, rgba(50, 50, 80, 0.9) 0%, rgba(40, 40, 70, 0.9) 100%);
+    background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
+}
+
+body.night-mode .map-control-btn:not(.active) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+}
+
+body.night-mode .legend-item {
+    color: #fff;
 }
 
 /* Weather-based backgrounds */
@@ -1507,16 +1380,17 @@ body.rainy {
     background: var(--rainy-gradient);
 }
 
+/* Focus styles for accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
 /* Smooth scrolling */
 html {
     scroll-behavior: smooth;
-}
-
-/* Focus styles for accessibility */
-button:focus-visible,
-input:focus-visible {
-    outline: 3px solid rgba(102, 126, 234, 0.5);
-    outline-offset: 2px;
 }
 
 /* Print styles */
@@ -1525,100 +1399,7 @@ input:focus-visible {
         background: white !important;
     }
     
-    .install-prompt,
-    .search-section {
-        display: none !important;
-    }
-}
-
-/* Edge Sidebar / Narrow Widget View */
-@media (max-width: 450px) and (max-height: 800px) {
-    .app-container {
-        padding: 12px;
-    }
-    
-    .header {
-        margin-bottom: 12px;
-    }
-    
-    .app-title {
-        font-size: 1.25rem;
-    }
-    
-    .tab-navigation {
-        gap: 4px;
-        padding: 4px;
-        margin-bottom: 12px;
-    }
-    
-    .tab-btn {
-        padding: 8px 4px;
-        font-size: 0.65rem;
-    }
-    
-    .tab-icon {
-        font-size: 1rem;
-    }
-    
-    .weather-icon-large {
-        font-size: 3rem;
-    }
-    
-    .temperature {
-        font-size: 3rem;
-    }
-    
-    .weather-details {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-    }
-    
-    .detail-card {
-        padding: 12px;
-    }
-    
-    .detail-value {
-        font-size: 0.9rem;
-    }
-    
-    .detail-label {
-        font-size: 0.7rem;
-    }
-    
-    .map-section {
-        padding: 12px;
-    }
-    
-    .precip-map {
-        height: 200px;
-        min-height: 150px;
-    }
-}
-
-/* Windows Widget compact mode */
-@media (max-width: 320px) {
-    .search-section,
     .install-prompt {
-        display: none;
-    }
-    
-    .app-container {
-        padding: 8px;
-    }
-    
-    .header-content {
-        flex-wrap: wrap;
-    }
-    
-    .tab-navigation {
-        flex-wrap: wrap;
-    }
-    
-    .tab-btn {
-        min-width: 60px;
-    }
-    
-    .tab-label {
-        display: none;
+        display: none !important;
     }
 }

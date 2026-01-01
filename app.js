@@ -1,7 +1,9 @@
 /**
- * Weather Expectations PWA
- * A beautiful weather app with location detection and search
+ * Weather PWA
+ * A Fluent-design weather app with location detection and precipitation radar
  */
+
+'use strict';
 
 // ========================================
 // TRANSLATIONS
@@ -243,57 +245,43 @@ const translations = {
     }
 };
 
-// Weather code to icon mapping (icons are universal)
+// Weather code to icon mapping
 const weatherIcons = {
-    0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
-    45: '🌫️', 48: '🌫️',
+    0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️',
     51: '🌧️', 53: '🌧️', 55: '🌧️', 56: '🌧️', 57: '🌧️',
     61: '🌧️', 63: '🌧️', 65: '🌧️', 66: '🌨️', 67: '🌨️',
-    71: '❄️', 73: '❄️', 75: '❄️', 77: '🌨️',
-    80: '🌦️', 81: '🌦️', 82: '🌧️',
-    85: '🌨️', 86: '🌨️',
-    95: '⛈️', 96: '⛈️', 99: '⛈️'
+    71: '❄️', 73: '❄️', 75: '❄️', 77: '🌨️', 80: '🌦️', 81: '🌦️', 82: '🌧️',
+    85: '🌨️', 86: '🌨️', 95: '⛈️', 96: '⛈️', 99: '⛈️'
 };
 
-// Beaufort scale conversion (km/h to Beaufort)
+// Beaufort scale thresholds (km/h)
+const beaufortThresholds = [1, 6, 12, 20, 29, 39, 50, 62, 75, 89, 103, 118];
+
 function getBeaufort(kmh) {
-    if (kmh < 1) return 0;
-    if (kmh < 6) return 1;
-    if (kmh < 12) return 2;
-    if (kmh < 20) return 3;
-    if (kmh < 29) return 4;
-    if (kmh < 39) return 5;
-    if (kmh < 50) return 6;
-    if (kmh < 62) return 7;
-    if (kmh < 75) return 8;
-    if (kmh < 89) return 9;
-    if (kmh < 103) return 10;
-    if (kmh < 118) return 11;
-    return 12;
+    return beaufortThresholds.findIndex(t => kmh < t);
 }
 
-// Convert wind direction degrees to compass direction
+// Wind direction constants
+const windDirections = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+
 function getWindDirection(degrees) {
-    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-    const index = Math.round(degrees / 22.5) % 16;
-    const dirKey = directions[index];
-    return t(`windDir.${dirKey}`);
+    return t(`windDir.${windDirections[Math.round(degrees / 22.5) % 16]}`);
 }
 
 // Get translation helper
-function t(key) {
-    const keys = key.split('.');
-    let value = translations[state.language];
-    for (const k of keys) {
-        value = value?.[k];
-    }
-    return value || key;
-}
+const t = (key) => key.split('.').reduce((obj, k) => obj?.[k], translations[state.language]) || key;
 
 // Get weather description in current language
-function getWeatherDescription(code) {
-    return translations[state.language].weather[code] || 'Unknown';
-}
+const getWeatherDescription = (code) => translations[state.language].weather[code] || 'Unknown';
+
+// Debounce helper
+const debounce = (func, wait) => {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+    };
+};
 
 // ========================================
 // CONFIGURATION
@@ -572,11 +560,13 @@ async function registerServiceWorker() {
 // ========================================
 // TAB NAVIGATION
 // ========================================
+const tabOrder = ['current', 'hourly', 'daily', 'radar'];
+
 function setupTabs() {
     // Load saved tab preference or use default
     if (config.rememberTab) {
         const savedTab = localStorage.getItem('weatherActiveTab');
-        if (savedTab && ['current', 'hourly', 'daily', 'radar'].includes(savedTab)) {
+        if (savedTab && tabOrder.includes(savedTab)) {
             state.activeTab = savedTab;
         }
     }
@@ -588,6 +578,51 @@ function setupTabs() {
             switchTab(tabId);
         });
     });
+    
+    // Setup swipe gestures for tab navigation
+    setupSwipeGestures();
+}
+
+// Swipe gesture support for mobile tab navigation
+function setupSwipeGestures() {
+    const container = elements.tabContentContainer;
+    if (!container) return;
+    
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+    const minSwipeDistance = 50;
+    const maxVerticalDistance = 100;
+    
+    container.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+    
+    container.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+    }, { passive: true });
+    
+    function handleSwipe() {
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = Math.abs(touchEndY - touchStartY);
+        
+        // Only handle horizontal swipes (not vertical scrolling)
+        if (Math.abs(deltaX) < minSwipeDistance || deltaY > maxVerticalDistance) return;
+        
+        const currentIndex = tabOrder.indexOf(state.activeTab);
+        
+        if (deltaX < 0 && currentIndex < tabOrder.length - 1) {
+            // Swipe left - next tab
+            switchTab(tabOrder[currentIndex + 1]);
+        } else if (deltaX > 0 && currentIndex > 0) {
+            // Swipe right - previous tab
+            switchTab(tabOrder[currentIndex - 1]);
+        }
+    }
 }
 
 function switchTab(tabId) {
@@ -611,6 +646,11 @@ function switchTab(tabId) {
         panel.classList.toggle('active', isActive);
     });
     
+    // Stop radar animation when leaving radar tab
+    if (tabId !== 'radar') {
+        stopRadarAnimation();
+    }
+    
     // Initialize map if radar tab is selected and not yet initialized
     if (tabId === 'radar' && state.currentLocation && !state.mapInitialized) {
         setTimeout(() => {
@@ -619,10 +659,14 @@ function switchTab(tabId) {
         }, 100);
     }
     
-    // Fix map size if switching to radar tab (Leaflet issue)
+    // Fix map size and autoplay if switching to radar tab
     if (tabId === 'radar' && state.map) {
         setTimeout(() => {
             state.map.invalidateSize();
+            // Autoplay radar animation
+            if (state.radarLayers.length > 0 && !state.isPlaying) {
+                startRadarAnimation();
+            }
         }, 100);
     }
 }
@@ -751,19 +795,6 @@ function setupEventListeners() {
         state.currentRadarIndex = parseInt(e.target.value);
         updateRadarFrame();
     });
-}
-
-// Debounce helper
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
 }
 
 // Detect user location
@@ -1233,6 +1264,11 @@ async function loadRadarData() {
         updateRadarFrame();
         
         elements.mapOverlay.classList.add('hidden');
+        
+        // Autoplay radar animation
+        if (!state.isPlaying) {
+            startRadarAnimation();
+        }
         
     } catch (error) {
         console.error('Error loading radar data:', error);
