@@ -1234,7 +1234,7 @@ function renderHourlyForecast(hourly) {
         const isSelected = state.selectedHourIndex === index;
         
         return `
-            <div class="hourly-item ${isNow ? 'now' : ''} ${isSelected ? 'selected' : ''}" data-index="${index}">
+            <div class="hourly-item ${isSelected ? 'selected' : ''}" data-index="${index}">
                 <div class="hourly-time">${isNow ? t('time.now') : formatHour(hour)}</div>
                 <div class="hourly-icon">${icon}</div>
                 <div class="hourly-temp">${Math.round(temps[index])}°</div>
