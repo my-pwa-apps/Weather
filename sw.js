@@ -3,16 +3,16 @@
  * Handles caching and offline functionality
  */
 
-const CACHE_NAME = 'weather-v13';
+const CACHE_NAME = 'weather-v14';
 const STATIC_ASSETS = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/app.js',
-    '/manifest.json',
-    '/icons/icon.svg',
-    '/icons/icon-192.png',
-    '/icons/icon-512.png'
+    './',
+    './index.html',
+    './styles.css',
+    './app.js',
+    './manifest.json',
+    './icons/icon.svg',
+    './icons/icon-192.png',
+    './icons/icon-512.png'
 ];
 
 // API cache for weather data
@@ -128,7 +128,7 @@ async function cacheFirst(request) {
         console.log('[SW] Network request failed:', error);
         // Return offline fallback for HTML requests
         if (request.destination === 'document') {
-            return caches.match('/index.html');
+            return caches.match('./index.html');
         }
         throw error;
     }
