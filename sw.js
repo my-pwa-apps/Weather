@@ -3,17 +3,16 @@
  * Handles caching and offline functionality
  */
 
-const CACHE_NAME = 'weather-v9';
+const CACHE_NAME = 'weather-v11';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
     '/styles.css',
     '/app.js',
     '/manifest.json',
-    '/browserconfig.xml',
+    '/icons/icon.svg',
     '/icons/icon-192.png',
-    '/icons/icon-512.png',
-    '/icons/icon.svg'
+    '/icons/icon-512.png'
 ];
 
 // API cache for weather data

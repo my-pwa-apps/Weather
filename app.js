@@ -899,6 +899,7 @@ function setupEventListeners() {
     
     // Install prompt
     window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('beforeinstallprompt event fired');
         e.preventDefault();
         state.deferredPrompt = e;
         setTimeout(() => {
@@ -906,6 +907,18 @@ function setupEventListeners() {
         }, 3000);
     });
     
+    // Check if app is already installed
+    window.addEventListener('appinstalled', () => {
+        console.log('App was installed');
+        elements.installPrompt.classList.add('hidden');
+        state.deferredPrompt = null;
+    });
+    
+    // For iOS - check if running in standalone mode
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        console.log('App is running in standalone mode');
+    }
+
     elements.installBtn.addEventListener('click', async () => {
         if (state.deferredPrompt) {
             state.deferredPrompt.prompt();

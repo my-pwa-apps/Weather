@@ -3,6 +3,7 @@
     "short_name": "Weer",
     "description": "Je persoonlijke weer assistent - mooie weersvoorspellingen voor jouw locatie",
     "start_url": "/",
+    "id": "/",
     "display": "standalone",
     "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
     "background_color": "#667eea",
@@ -14,6 +15,12 @@
         "preferred_width": 400
     },
     "icons": [
+        {
+            "src": "icons/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
         {
             "src": "icons/icon-72.png",
             "sizes": "72x72",
