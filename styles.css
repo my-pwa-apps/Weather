@@ -323,25 +323,24 @@ body {
 
 .current-weather {
     text-align: center;
-    margin-bottom: auto;
-    padding-bottom: var(--space-md);
+    flex-shrink: 0;
 }
 
 .weather-icon-large {
-    font-size: 3.5rem;
+    font-size: 4rem;
     line-height: 1;
-    margin-bottom: var(--space-sm);
+    margin-bottom: var(--space-xs);
 }
 
 .temperature-display {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .temperature {
-    font-size: 3.5rem;
+    font-size: 4rem;
     font-weight: 600;
     line-height: 1;
     background: var(--primary-gradient);
@@ -351,24 +350,26 @@ body {
 }
 
 .temperature-unit {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 500;
     color: var(--text-secondary);
-    margin-top: 6px;
+    margin-top: 8px;
 }
 
 .weather-description {
-    font-size: 1rem;
+    font-size: 1.1rem;
     color: var(--text-secondary);
     font-weight: 500;
+    margin-bottom: var(--space-md);
 }
 
-/* Weather Details Grid - Compact */
+/* Weather Details Grid - Equal sized tiles */
 .weather-details {
+    flex: 1;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
     gap: var(--space-sm);
-    margin-top: auto;
 }
 
 .detail-card {
@@ -376,37 +377,37 @@ body {
     border-radius: var(--radius-md);
     padding: var(--space-md);
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: var(--space-sm);
+    justify-content: center;
+    text-align: center;
+    gap: var(--space-xs);
 }
 
 .detail-icon {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
 }
 
 .detail-info {
     display: flex;
     flex-direction: column;
-    min-width: 0;
+    align-items: center;
 }
 
 .detail-value {
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .detail-value small {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     font-weight: 500;
     opacity: 0.7;
 }
 
 .detail-label {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: var(--text-secondary);
 }
 
@@ -433,27 +434,26 @@ body {
     margin-bottom: var(--space-md);
 }
 
-/* Hourly Scroll */
+/* Hourly Grid - Fits on one screen */
 .hourly-scroll {
-    display: flex;
-    gap: var(--space-sm);
-    overflow-x: auto;
-    padding-bottom: var(--space-sm);
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.hourly-scroll::-webkit-scrollbar {
-    display: none;
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 4px;
+    overflow: hidden;
 }
 
 .hourly-item {
-    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     background: rgba(0, 0, 0, 0.03);
-    border-radius: var(--radius-md);
-    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-sm);
+    padding: 4px 2px;
     text-align: center;
-    min-width: 64px;
+    min-height: 0;
 }
 
 .hourly-item.now {
@@ -462,9 +462,9 @@ body {
 }
 
 .hourly-time {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     color: var(--text-secondary);
-    margin-bottom: 4px;
+    line-height: 1.2;
 }
 
 .hourly-item.now .hourly-time {
@@ -472,13 +472,14 @@ body {
 }
 
 .hourly-icon {
-    font-size: 1.25rem;
-    margin-bottom: 4px;
+    font-size: 1rem;
+    line-height: 1.2;
 }
 
 .hourly-temp {
-    font-size: 0.85rem;
+    font-size: 0.7rem;
     font-weight: 600;
+    line-height: 1.2;
 }
 
 /* Daily Forecast - Scrollable */
@@ -1189,6 +1190,23 @@ body {
         grid-template-columns: repeat(4, 1fr);
     }
     
+    .hourly-scroll {
+        grid-template-columns: repeat(8, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+    }
+    
+    .hourly-item {
+        padding: var(--space-sm);
+    }
+    
+    .hourly-icon {
+        font-size: 1.25rem;
+    }
+    
+    .hourly-temp {
+        font-size: 0.85rem;
+    }
+    
     .control-label {
         display: inline;
     }
@@ -1253,22 +1271,23 @@ body {
     
     .weather-description {
         font-size: 0.85rem;
+        margin-bottom: var(--space-sm);
     }
     
     .detail-card {
-        padding: var(--space-sm);
+        padding: var(--space-xs);
     }
     
     .detail-icon {
-        font-size: 1rem;
+        font-size: 1.25rem;
     }
     
     .detail-value {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
     
     .detail-label {
-        font-size: 0.6rem;
+        font-size: 0.65rem;
     }
     
     .section-title {
@@ -1276,17 +1295,21 @@ body {
         margin-bottom: var(--space-sm);
     }
     
+    .hourly-scroll {
+        grid-template-columns: repeat(8, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+    }
+    
     .hourly-item {
-        padding: var(--space-sm) var(--space-md);
-        min-width: 54px;
+        padding: 2px;
     }
     
     .hourly-icon {
-        font-size: 1rem;
+        font-size: 0.9rem;
     }
     
     .hourly-temp {
-        font-size: 0.75rem;
+        font-size: 0.65rem;
     }
     
     .daily-item {
