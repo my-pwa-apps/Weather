@@ -129,6 +129,29 @@
                     <h3 class="section-title" id="titleHourly">24-uurs Voorspelling</h3>
                     <div class="hourly-scroll" id="hourlyForecast"></div>
                 </div>
+                <!-- Hourly Detail View -->
+                <div class="detail-overlay hidden" id="hourlyDetailOverlay">
+                    <button class="back-btn" id="hourlyBackBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                        <span id="hourlyBackText">Terug</span>
+                    </button>
+                    <div class="detail-content">
+                        <div class="detail-header">
+                            <div class="detail-icon-large" id="hourlyDetailIcon">🌤️</div>
+                            <div class="detail-temp-large">
+                                <span id="hourlyDetailTemp">--</span>
+                                <span class="temp-unit">°C</span>
+                            </div>
+                            <p class="detail-desc" id="hourlyDetailDesc">--</p>
+                        </div>
+                        <div class="detail-grid">
+                            <div class="detail-card"><div class="detail-icon">💨</div><div class="detail-info"><span class="detail-value" id="hourlyDetailWind">--</span><span class="detail-label" id="hourlyDetailWindLabel">Wind</span></div></div>
+                            <div class="detail-card"><div class="detail-icon">💧</div><div class="detail-info"><span class="detail-value" id="hourlyDetailHumidity">--</span><span class="detail-label" id="hourlyDetailHumidityLabel">Luchtvochtigheid</span></div></div>
+                            <div class="detail-card"><div class="detail-icon">🌡️</div><div class="detail-info"><span class="detail-value" id="hourlyDetailFeelsLike">--</span><span class="detail-label" id="hourlyDetailFeelsLikeLabel">Gevoelstemp.</span></div></div>
+                            <div class="detail-card"><div class="detail-icon">☔</div><div class="detail-info"><span class="detail-value" id="hourlyDetailPrecip">--</span><span class="detail-label" id="hourlyDetailPrecipLabel">Neerslag</span></div></div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- Daily Forecast Tab -->
@@ -136,6 +159,27 @@
                 <div class="forecast-section">
                     <h3 class="section-title" id="titleDaily">7-daagse Voorspelling</h3>
                     <div class="daily-forecast" id="dailyForecast"></div>
+                </div>
+                <!-- Daily Detail View -->
+                <div class="detail-overlay hidden" id="dailyDetailOverlay">
+                    <button class="back-btn" id="dailyBackBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                        <span id="dailyBackText">Terug</span>
+                    </button>
+                    <div class="detail-content">
+                        <div class="detail-header">
+                            <div class="detail-icon-large" id="dailyDetailIcon">🌤️</div>
+                            <div class="detail-temp-large">
+                                <span id="dailyDetailTemp">--</span>
+                            </div>
+                            <p class="detail-desc" id="dailyDetailDesc">--</p>
+                        </div>
+                        <div class="detail-grid">
+                            <div class="detail-card"><div class="detail-icon">💨</div><div class="detail-info"><span class="detail-value" id="dailyDetailWind">--</span><span class="detail-label" id="dailyDetailWindLabel">Wind</span></div></div>
+                            <div class="detail-card"><div class="detail-icon">🌡️</div><div class="detail-info"><span class="detail-value" id="dailyDetailHighLow">--</span><span class="detail-label" id="dailyDetailHighLowLabel">Hoog / Laag</span></div></div>
+                            <div class="detail-card"><div class="detail-icon">☔</div><div class="detail-info"><span class="detail-value" id="dailyDetailPrecip">--</span><span class="detail-label" id="dailyDetailPrecipLabel">Neerslag</span></div></div>
+                        </div>
+                    </div>
                 </div>
             </section>
 

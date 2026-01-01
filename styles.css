@@ -371,6 +371,7 @@ body {
    FORECAST SECTION - Scrollable
    ======================================== */
 .forecast-section {
+    position: relative;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -532,6 +533,97 @@ body {
     color: var(--text-muted);
     min-width: 28px;
     text-align: right;
+}
+
+/* ========================================
+   DETAIL OVERLAY - In-tab detail view
+   ======================================== */
+.detail-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-card);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.2s var(--ease-fluent);
+    z-index: 10;
+}
+
+.detail-overlay.hidden {
+    display: none;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: var(--space-sm);
+    margin: calc(-1 * var(--space-sm));
+    margin-bottom: var(--space-md);
+    border-radius: var(--radius-md);
+    transition: all var(--duration-fast) var(--ease-fluent);
+}
+
+.back-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.back-btn:active {
+    transform: scale(0.98);
+}
+
+.detail-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.detail-header {
+    text-align: center;
+    margin-bottom: var(--space-lg);
+}
+
+.detail-icon-large {
+    font-size: 4rem;
+    line-height: 1;
+    margin-bottom: var(--space-sm);
+}
+
+.detail-temp-large {
+    font-size: 2.5rem;
+    font-weight: 300;
+    color: var(--text-primary);
+}
+
+.detail-temp-large .temp-unit {
+    font-size: 1.5rem;
+    opacity: 0.7;
+}
+
+.detail-desc {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-top: var(--space-xs);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+}
+
+.detail-grid .detail-card {
+    background: rgba(0, 0, 0, 0.03);
 }
 
 /* ========================================

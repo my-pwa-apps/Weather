@@ -95,7 +95,9 @@ const translations = {
             settingsTimeFormat: 'Tijdnotatie',
             timeFormat24h: '24-uurs',
             timeFormat12h: '12-uurs',
-            settingsLanguage: 'Taal'
+            settingsLanguage: 'Taal',
+            back: 'Terug',
+            highLow: 'Hoog / Laag'
         },
         // Wind directions
         windDir: {
@@ -216,7 +218,9 @@ const translations = {
             settingsTimeFormat: 'Time format',
             timeFormat24h: '24-hour',
             timeFormat12h: '12-hour',
-            settingsLanguage: 'Language'
+            settingsLanguage: 'Language',
+            back: 'Back',
+            highLow: 'High / Low'
         },
         // Wind directions
         windDir: {
@@ -406,7 +410,35 @@ const elements = {
     // Language settings
     settingsLanguageTitle: document.getElementById('settingsLanguageTitle'),
     langNlBtn: document.getElementById('langNlBtn'),
-    langEnBtn: document.getElementById('langEnBtn')
+    langEnBtn: document.getElementById('langEnBtn'),
+    // Hourly detail overlay
+    hourlyDetailOverlay: document.getElementById('hourlyDetailOverlay'),
+    hourlyBackBtn: document.getElementById('hourlyBackBtn'),
+    hourlyBackText: document.getElementById('hourlyBackText'),
+    hourlyDetailIcon: document.getElementById('hourlyDetailIcon'),
+    hourlyDetailTemp: document.getElementById('hourlyDetailTemp'),
+    hourlyDetailDesc: document.getElementById('hourlyDetailDesc'),
+    hourlyDetailWind: document.getElementById('hourlyDetailWind'),
+    hourlyDetailWindLabel: document.getElementById('hourlyDetailWindLabel'),
+    hourlyDetailHumidity: document.getElementById('hourlyDetailHumidity'),
+    hourlyDetailHumidityLabel: document.getElementById('hourlyDetailHumidityLabel'),
+    hourlyDetailFeelsLike: document.getElementById('hourlyDetailFeelsLike'),
+    hourlyDetailFeelsLikeLabel: document.getElementById('hourlyDetailFeelsLikeLabel'),
+    hourlyDetailPrecip: document.getElementById('hourlyDetailPrecip'),
+    hourlyDetailPrecipLabel: document.getElementById('hourlyDetailPrecipLabel'),
+    // Daily detail overlay
+    dailyDetailOverlay: document.getElementById('dailyDetailOverlay'),
+    dailyBackBtn: document.getElementById('dailyBackBtn'),
+    dailyBackText: document.getElementById('dailyBackText'),
+    dailyDetailIcon: document.getElementById('dailyDetailIcon'),
+    dailyDetailTemp: document.getElementById('dailyDetailTemp'),
+    dailyDetailDesc: document.getElementById('dailyDetailDesc'),
+    dailyDetailWind: document.getElementById('dailyDetailWind'),
+    dailyDetailWindLabel: document.getElementById('dailyDetailWindLabel'),
+    dailyDetailHighLow: document.getElementById('dailyDetailHighLow'),
+    dailyDetailHighLowLabel: document.getElementById('dailyDetailHighLowLabel'),
+    dailyDetailPrecip: document.getElementById('dailyDetailPrecip'),
+    dailyDetailPrecipLabel: document.getElementById('dailyDetailPrecipLabel')
 };
 
 // Initialize the app
@@ -648,6 +680,7 @@ function setupTabs() {
 // Swipe gesture support for mobile tab navigation
 function setupSwipeGestures() {
     const container = elements.tabContentContainer;
+    const tabBar = elements.tabNavigation;
     if (!container) return;
     
     let touchStartX = 0;
@@ -658,18 +691,27 @@ function setupSwipeGestures() {
     const minSwipeDistance = 50;
     const maxVerticalDistance = 100;
     
-    container.addEventListener('touchstart', (e) => {
+    function handleTouchStart(e) {
         touchStartX = e.changedTouches[0].screenX;
         touchStartY = e.changedTouches[0].screenY;
         // Check if touch started on the map
         touchStartedOnMap = e.target.closest('#precipMap') !== null;
-    }, { passive: true });
+    }
     
-    container.addEventListener('touchend', (e) => {
+    function handleTouchEnd(e) {
         touchEndX = e.changedTouches[0].screenX;
         touchEndY = e.changedTouches[0].screenY;
         handleSwipe();
-    }, { passive: true });
+    }
+    
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    
+    // Also add swipe support to tab bar
+    if (tabBar) {
+        tabBar.addEventListener('touchstart', handleTouchStart, { passive: true });
+        tabBar.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
     
     function handleSwipe() {
         // Don't swipe when touch started on the map (allow map panning)
@@ -699,6 +741,14 @@ function switchTab(tabId) {
     // Save preference
     if (config.rememberTab) {
         localStorage.setItem('weatherActiveTab', tabId);
+    }
+    
+    // Hide any open detail overlays
+    if (elements.hourlyDetailOverlay) {
+        elements.hourlyDetailOverlay.classList.add('hidden');
+    }
+    if (elements.dailyDetailOverlay) {
+        elements.dailyDetailOverlay.classList.add('hidden');
     }
     
     // Update button states
@@ -873,6 +923,14 @@ function setupEventListeners() {
         state.currentRadarIndex = parseInt(e.target.value);
         updateRadarFrame();
     });
+    
+    // Back buttons for detail overlays
+    if (elements.hourlyBackBtn) {
+        elements.hourlyBackBtn.addEventListener('click', hideHourlyDetail);
+    }
+    if (elements.dailyBackBtn) {
+        elements.dailyBackBtn.addEventListener('click', hideDailyDetail);
+    }
 }
 
 // Detect user location
@@ -1157,7 +1215,7 @@ function selectHourlyItem(index) {
         item.classList.toggle('selected', i === index);
     });
     
-    // Show details in the current weather section (switch to current tab)
+    // Show details in the overlay
     if (state.hourlyData && state.weatherData) {
         const { hours, startIndex } = state.hourlyData;
         const hourly = state.weatherData.hourly;
@@ -1177,20 +1235,34 @@ function selectHourlyItem(index) {
         const beaufort = getBeaufort(Math.round(windSpeed));
         const windDirText = getWindDirection(windDir);
         
-        // Switch to current tab to show details
-        switchTab('current');
+        // Update hourly detail overlay
+        elements.hourlyDetailIcon.textContent = icon;
+        elements.hourlyDetailTemp.textContent = Math.round(temp);
+        elements.hourlyDetailDesc.textContent = `${formatHour(date.getHours())} - ${desc}`;
+        elements.hourlyDetailWind.innerHTML = `${windDirText} ${Math.round(windSpeed)} km/h<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
+        elements.hourlyDetailHumidity.textContent = `${humidity}%`;
+        elements.hourlyDetailFeelsLike.textContent = `${Math.round(feelsLike)}°C`;
+        elements.hourlyDetailPrecip.textContent = `${precip} mm`;
         
-        // Update current weather display with selected hour data
-        elements.weatherIconLarge.textContent = icon;
-        elements.currentTemp.textContent = Math.round(temp);
-        elements.weatherDescription.textContent = `${formatHour(date.getHours())} - ${desc}`;
+        // Update labels
+        elements.hourlyDetailWindLabel.textContent = t('ui.wind');
+        elements.hourlyDetailHumidityLabel.textContent = t('ui.humidity');
+        elements.hourlyDetailFeelsLikeLabel.textContent = t('ui.feelsLike');
+        elements.hourlyDetailPrecipLabel.textContent = t('ui.precipitation');
+        elements.hourlyBackText.textContent = t('ui.back');
         
-        // Update detail cards
-        elements.windSpeed.innerHTML = `${windDirText} ${Math.round(windSpeed)} km/h<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
-        elements.humidity.textContent = `${humidity}%`;
-        elements.feelsLike.textContent = `${Math.round(feelsLike)}°C`;
-        elements.precipitation.textContent = `${precip} mm`;
+        // Show the overlay
+        elements.hourlyDetailOverlay.classList.remove('hidden');
     }
+}
+
+// Hide hourly detail overlay
+function hideHourlyDetail() {
+    elements.hourlyDetailOverlay.classList.add('hidden');
+    state.selectedHourIndex = null;
+    elements.hourlyForecast.querySelectorAll('.hourly-item').forEach(item => {
+        item.classList.remove('selected');
+    });
 }
 
 // Render daily forecast
@@ -1237,7 +1309,7 @@ function selectDailyItem(index) {
         item.classList.toggle('selected', i === index);
     });
     
-    // Show details in the current weather section
+    // Show details in the overlay
     if (state.weatherData && state.weatherData.daily) {
         const daily = state.weatherData.daily;
         const weatherCode = daily.weather_code[index];
@@ -1262,20 +1334,32 @@ function selectDailyItem(index) {
             dayName = t(`days.${dayKeys[date.getDay()]}`);
         }
         
-        // Switch to current tab to show details
-        switchTab('current');
+        // Update daily detail overlay
+        elements.dailyDetailIcon.textContent = icon;
+        elements.dailyDetailTemp.textContent = `${dayName}`;
+        elements.dailyDetailDesc.textContent = desc;
+        elements.dailyDetailWind.innerHTML = `${windDirText} ${Math.round(windMax)} km/h<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
+        elements.dailyDetailHighLow.textContent = `${Math.round(maxTemp)}° / ${Math.round(minTemp)}°`;
+        elements.dailyDetailPrecip.textContent = `${precipSum} mm`;
         
-        // Update current weather display with selected day data
-        elements.weatherIconLarge.textContent = icon;
-        elements.currentTemp.textContent = `${Math.round(maxTemp)}/${Math.round(minTemp)}`;
-        elements.weatherDescription.textContent = `${dayName} - ${desc}`;
+        // Update labels
+        elements.dailyDetailWindLabel.textContent = t('ui.wind');
+        elements.dailyDetailHighLowLabel.textContent = t('ui.highLow');
+        elements.dailyDetailPrecipLabel.textContent = t('ui.precipitation');
+        elements.dailyBackText.textContent = t('ui.back');
         
-        // Update detail cards
-        elements.windSpeed.innerHTML = `${windDirText} ${Math.round(windMax)} km/h<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
-        elements.humidity.textContent = '-';
-        elements.feelsLike.textContent = '-';
-        elements.precipitation.textContent = `${precipSum} mm`;
+        // Show the overlay
+        elements.dailyDetailOverlay.classList.remove('hidden');
     }
+}
+
+// Hide daily detail overlay
+function hideDailyDetail() {
+    elements.dailyDetailOverlay.classList.add('hidden');
+    state.selectedDayIndex = null;
+    elements.dailyForecast.querySelectorAll('.daily-item').forEach(item => {
+        item.classList.remove('selected');
+    });
 }
 
 // Format hour based on time format setting
