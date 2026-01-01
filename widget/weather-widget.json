@@ -1,0 +1,83 @@
+{
+    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+    "type": "AdaptiveCard",
+    "version": "1.5",
+    "body": [
+        {
+            "type": "Container",
+            "items": [
+                {
+                    "type": "TextBlock",
+                    "text": "${location}",
+                    "size": "Medium",
+                    "weight": "Bolder",
+                    "wrap": true
+                },
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "width": "auto",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "${icon}",
+                                    "size": "ExtraLarge"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Column",
+                            "width": "stretch",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": "${temperature}°C",
+                                    "size": "ExtraLarge",
+                                    "weight": "Bolder"
+                                },
+                                {
+                                    "type": "TextBlock",
+                                    "text": "${description}",
+                                    "size": "Small",
+                                    "isSubtle": true,
+                                    "wrap": true
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "FactSet",
+                    "facts": [
+                        {
+                            "title": "Wind",
+                            "value": "${wind}"
+                        },
+                        {
+                            "title": "Vochtigheid",
+                            "value": "${humidity}%"
+                        },
+                        {
+                            "title": "Gevoelstemp.",
+                            "value": "${feelsLike}°C"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "type": "Action.Execute",
+            "title": "Open App",
+            "verb": "open"
+        },
+        {
+            "type": "Action.Execute",
+            "title": "Vernieuwen",
+            "verb": "refresh"
+        }
+    ]
+}

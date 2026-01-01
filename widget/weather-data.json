@@ -1,0 +1,9 @@
+{
+    "location": "Laden...",
+    "icon": "🌤️",
+    "temperature": "--",
+    "description": "Weergegevens ophalen...",
+    "wind": "-- km/h",
+    "humidity": "--",
+    "feelsLike": "--"
+}

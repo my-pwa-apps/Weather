@@ -1,0 +1,115 @@
+{
+    "name": "Weer Verwachting",
+    "short_name": "Weer",
+    "description": "Je persoonlijke weer assistent - mooie weersvoorspellingen voor jouw locatie",
+    "start_url": "/",
+    "display": "standalone",
+    "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+    "background_color": "#667eea",
+    "theme_color": "#667eea",
+    "orientation": "any",
+    "scope": "/",
+    "lang": "nl",
+    "edge_side_panel": {
+        "preferred_width": 400
+    },
+    "icons": [
+        {
+            "src": "icons/icon-72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-152.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icons/icon-384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["weather", "utilities"],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "Bekijk Weer",
+            "short_name": "Weer",
+            "description": "Bekijk het huidige weer",
+            "url": "/",
+            "icons": [
+                {
+                    "src": "icons/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ],
+    "widgets": [
+        {
+            "name": "Weer Widget",
+            "description": "Bekijk snel het huidige weer",
+            "tag": "weather-widget",
+            "ms_ac_template": "widget/weather-widget.json",
+            "data": "widget/weather-data.json",
+            "type": "application/json",
+            "screenshots": [
+                {
+                    "src": "icons/widget-screenshot.png",
+                    "sizes": "400x400",
+                    "label": "Weer widget"
+                }
+            ],
+            "icons": [
+                {
+                    "src": "icons/icon-192.png",
+                    "sizes": "192x192"
+                }
+            ],
+            "backgrounds": [
+                {
+                    "src": "icons/widget-bg.png",
+                    "sizes": "400x400"
+                }
+            ]
+        }
+    ],
+    "handle_links": "preferred",
+    "launch_handler": {
+        "client_mode": "focus-existing"
+    }
+}
