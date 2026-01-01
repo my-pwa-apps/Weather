@@ -435,6 +435,8 @@ const elements = {
     dailyDetailDesc: document.getElementById('dailyDetailDesc'),
     dailyDetailWind: document.getElementById('dailyDetailWind'),
     dailyDetailWindLabel: document.getElementById('dailyDetailWindLabel'),
+    dailyDetailHumidity: document.getElementById('dailyDetailHumidity'),
+    dailyDetailHumidityLabel: document.getElementById('dailyDetailHumidityLabel'),
     dailyDetailHighLow: document.getElementById('dailyDetailHighLow'),
     dailyDetailHighLowLabel: document.getElementById('dailyDetailHighLowLabel'),
     dailyDetailPrecip: document.getElementById('dailyDetailPrecip'),
@@ -722,6 +724,22 @@ function setupSwipeGestures() {
         
         // Only handle horizontal swipes (not vertical scrolling)
         if (Math.abs(deltaX) < minSwipeDistance || deltaY > maxVerticalDistance) return;
+        
+        // Check if a detail overlay is open - swipe right to go back
+        const hourlyOverlayOpen = elements.hourlyDetailOverlay && !elements.hourlyDetailOverlay.classList.contains('hidden');
+        const dailyOverlayOpen = elements.dailyDetailOverlay && !elements.dailyDetailOverlay.classList.contains('hidden');
+        
+        if (deltaX > 0 && hourlyOverlayOpen) {
+            // Swipe right on hourly detail - go back
+            hideHourlyDetail();
+            return;
+        }
+        
+        if (deltaX > 0 && dailyOverlayOpen) {
+            // Swipe right on daily detail - go back
+            hideDailyDetail();
+            return;
+        }
         
         const currentIndex = tabOrder.indexOf(state.activeTab);
         
@@ -1102,7 +1120,7 @@ async function fetchWeather() {
     elements.locationName.textContent = country ? `${name}, ${country}` : name;
     
     try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation&hourly=temperature_2m,weather_code,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant&timezone=auto`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation&hourly=temperature_2m,weather_code,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant,relative_humidity_2m_mean&timezone=auto`;
         
         const response = await fetch(url);
         
@@ -1318,6 +1336,7 @@ function selectDailyItem(index) {
         const precipSum = daily.precipitation_sum[index];
         const windMax = daily.wind_speed_10m_max[index];
         const windDir = daily.wind_direction_10m_dominant[index];
+        const humidity = daily.relative_humidity_2m_mean ? daily.relative_humidity_2m_mean[index] : null;
         
         const icon = weatherIcons[weatherCode] || '🌡️';
         const desc = getWeatherDescription(weatherCode);
@@ -1339,11 +1358,13 @@ function selectDailyItem(index) {
         elements.dailyDetailTemp.textContent = `${dayName}`;
         elements.dailyDetailDesc.textContent = desc;
         elements.dailyDetailWind.innerHTML = `${windDirText} ${Math.round(windMax)} km/h<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
+        elements.dailyDetailHumidity.textContent = humidity !== null ? `${Math.round(humidity)}%` : '-';
         elements.dailyDetailHighLow.textContent = `${Math.round(maxTemp)}° / ${Math.round(minTemp)}°`;
         elements.dailyDetailPrecip.textContent = `${precipSum} mm`;
         
         // Update labels
         elements.dailyDetailWindLabel.textContent = t('ui.wind');
+        elements.dailyDetailHumidityLabel.textContent = t('ui.humidity');
         elements.dailyDetailHighLowLabel.textContent = t('ui.highLow');
         elements.dailyDetailPrecipLabel.textContent = t('ui.precipitation');
         elements.dailyBackText.textContent = t('ui.back');
