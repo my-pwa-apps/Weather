@@ -105,93 +105,49 @@ body {
     align-items: center;
 }
 
-.app-title {
-    font-size: 1.25rem;
+.location-name {
+    font-size: 1.15rem;
     font-weight: 600;
     color: white;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.weather-icon {
-    font-size: 1.1rem;
+    margin: 0;
 }
 
 .header-buttons {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
-/* Fluent button style - subtle glass effect */
-.lang-toggle-btn,
-.location-btn,
-.settings-btn {
-    background: rgba(255, 255, 255, 0.15);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--radius-md);
-    color: white;
-    cursor: pointer;
-    transition: background var(--duration-fast) var(--ease-fluent);
-}
-
-.lang-toggle-btn {
-    padding: 6px 10px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    font-family: inherit;
-}
-
-.location-btn,
-.settings-btn {
-    padding: 8px;
+/* Icon buttons - clean, no background */
+.icon-btn {
+    background: transparent;
+    border: none;
+    padding: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.location-btn svg,
-.settings-btn svg {
-    width: 18px;
-    height: 18px;
-}
-
-.lang-toggle-btn:hover,
-.location-btn:hover,
-.settings-btn:hover {
-    background: rgba(255, 255, 255, 0.25);
-}
-
-.lang-toggle-btn:active,
-.location-btn:active,
-.settings-btn:active {
-    background: rgba(255, 255, 255, 0.1);
-    transform: scale(0.96);
-}
-
-/* ========================================
-   LOCATION DISPLAY - Minimal
-   ======================================== */
-.location-display {
-    flex-shrink: 0;
-    text-align: center;
     color: white;
-    margin-bottom: var(--space-sm);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: opacity var(--duration-fast) var(--ease-fluent),
+                transform var(--duration-fast) var(--ease-fluent);
 }
 
-.location-name {
-    font-size: 1.1rem;
-    font-weight: 600;
+.icon-btn svg {
+    width: 22px;
+    height: 22px;
 }
 
-.location-time {
-    font-size: 0.75rem;
-    opacity: 0.85;
-    margin-top: 2px;
+.icon-btn:hover {
+    opacity: 0.8;
 }
+
+.icon-btn:active {
+    opacity: 0.6;
+    transform: scale(0.92);
+}
+
+
 
 /* ========================================
    LOADING STATE
@@ -249,14 +205,14 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    padding: 8px 4px;
+    gap: 3px;
+    padding: 10px 6px;
     border: none;
     border-radius: var(--radius-md);
     background: transparent;
     color: rgba(255, 255, 255, 0.8);
     font-family: inherit;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     font-weight: 500;
     cursor: pointer;
     transition: all var(--duration-fast) var(--ease-fluent);
@@ -267,13 +223,13 @@ body {
 }
 
 .tab-btn.active {
-    background: rgba(255, 255, 255, 0.95);
-    color: var(--text-primary);
+    background: var(--primary-gradient);
+    color: white;
     box-shadow: var(--shadow-4);
 }
 
 .tab-icon {
-    font-size: 1.1rem;
+    font-size: 1.3rem;
     line-height: 1;
 }
 
@@ -442,6 +398,7 @@ body {
     grid-template-rows: repeat(4, 1fr);
     gap: 4px;
     overflow: hidden;
+    margin-top: var(--space-sm);
 }
 
 .hourly-item {
@@ -454,10 +411,32 @@ body {
     padding: 4px 2px;
     text-align: center;
     min-height: 0;
+    cursor: pointer;
+    transition: transform var(--duration-fast) var(--ease-fluent),
+                box-shadow var(--duration-fast) var(--ease-fluent);
+}
+
+.hourly-item:hover:not(.now):not(.selected) {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.hourly-item:active {
+    transform: scale(0.95);
 }
 
 .hourly-item.now {
     background: var(--primary-gradient);
+    color: white;
+}
+
+.hourly-item.selected:not(.now) {
+    background: var(--primary);
+    color: white;
+    box-shadow: var(--shadow-4);
+}
+
+.hourly-item.selected .hourly-time,
+.hourly-item.selected .hourly-temp {
     color: white;
 }
 
@@ -467,7 +446,8 @@ body {
     line-height: 1.2;
 }
 
-.hourly-item.now .hourly-time {
+.hourly-item.now .hourly-time,
+.hourly-item.selected .hourly-time {
     color: rgba(255, 255, 255, 0.9);
 }
 
@@ -494,15 +474,36 @@ body {
 
 .daily-item {
     flex-shrink: 0;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 40px 70px;
     align-items: center;
     padding: var(--space-md);
     background: rgba(0, 0, 0, 0.03);
     border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-fluent);
+}
+
+.daily-item:hover:not(.selected) {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.daily-item:active {
+    transform: scale(0.98);
+}
+
+.daily-item.selected {
+    background: var(--primary-gradient);
+    box-shadow: var(--shadow-4);
+}
+
+.daily-item.selected .daily-day,
+.daily-item.selected .daily-high,
+.daily-item.selected .daily-low {
+    color: white;
 }
 
 .daily-day {
-    flex: 1;
     font-size: 0.85rem;
     font-weight: 500;
     color: var(--text-primary);
@@ -510,23 +511,27 @@ body {
 
 .daily-icon {
     font-size: 1.25rem;
-    margin: 0 var(--space-md);
+    text-align: center;
 }
 
 .daily-temps {
     display: flex;
     gap: var(--space-sm);
-    align-items: center;
+    justify-content: flex-end;
 }
 
 .daily-high {
     font-size: 0.85rem;
     font-weight: 600;
+    min-width: 28px;
+    text-align: right;
 }
 
 .daily-low {
     font-size: 0.85rem;
     color: var(--text-muted);
+    min-width: 28px;
+    text-align: right;
 }
 
 /* ========================================
@@ -698,7 +703,7 @@ body {
     height: 6px;
     -webkit-appearance: none;
     appearance: none;
-    background: linear-gradient(90deg, #4facfe 0%, #667eea 50%, #f5576c 100%);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: var(--radius-full);
     outline: none;
     cursor: pointer;
@@ -734,53 +739,7 @@ body {
     text-align: right;
 }
 
-.timeline-legend {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    margin-top: var(--space-sm);
-    font-size: 0.65rem;
-    color: var(--text-muted);
-}
 
-.legend-bar {
-    flex: 1;
-    height: 3px;
-    background: linear-gradient(90deg, #4facfe 0%, #667eea 50%, #f5576c 100%);
-    border-radius: var(--radius-full);
-}
-
-.precipitation-legend {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    margin-top: var(--space-sm);
-    flex-wrap: wrap;
-}
-
-.legend-title {
-    font-size: 0.7rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-}
-
-.legend-scale {
-    display: flex;
-    gap: 2px;
-}
-
-.legend-item {
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
-    font-size: 0.6rem;
-    font-weight: 500;
-    color: #000;
-}
-
-.legend-light { background: #00ff00; }
-.legend-moderate { background: #ffff00; }
-.legend-heavy { background: #ff8800; }
-.legend-intense { background: #ff0000; }
 
 /* ========================================
    ERROR STATE
@@ -1085,6 +1044,39 @@ body {
     color: var(--primary);
 }
 
+/* Settings toggle buttons */
+.settings-toggle-group {
+    display: flex;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius-md);
+    padding: 4px;
+}
+
+.settings-toggle-btn {
+    flex: 1;
+    padding: var(--space-sm) var(--space-md);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-fluent);
+}
+
+.settings-toggle-btn.active {
+    background: white;
+    color: var(--text-primary);
+    box-shadow: var(--shadow-4);
+}
+
+.settings-toggle-btn:hover:not(.active) {
+    color: var(--text-primary);
+}
+
 /* ========================================
    INSTALL PROMPT
    ======================================== */
@@ -1386,9 +1378,7 @@ body.night-mode .map-control-btn:not(.active) {
     color: var(--text-secondary);
 }
 
-body.night-mode .legend-item {
-    color: #fff;
-}
+
 
 /* Weather-based backgrounds */
 body.sunny {

@@ -91,7 +91,11 @@ const translations = {
             settings: 'Instellingen',
             settingsLocation: 'Locatie',
             settingsLocationDesc: 'Zoek een stad of gebruik je huidige locatie.',
-            useMyLocation: 'Gebruik mijn locatie'
+            useMyLocation: 'Gebruik mijn locatie',
+            settingsTimeFormat: 'Tijdnotatie',
+            timeFormat24h: '24-uurs',
+            timeFormat12h: '12-uurs',
+            settingsLanguage: 'Taal'
         },
         // Wind directions
         windDir: {
@@ -208,7 +212,11 @@ const translations = {
             settings: 'Settings',
             settingsLocation: 'Location',
             settingsLocationDesc: 'Search for a city or use your current location.',
-            useMyLocation: 'Use my location'
+            useMyLocation: 'Use my location',
+            settingsTimeFormat: 'Time format',
+            timeFormat24h: '24-hour',
+            timeFormat12h: '12-hour',
+            settingsLanguage: 'Language'
         },
         // Wind directions
         windDir: {
@@ -313,7 +321,11 @@ const state = {
     animationSpeed: config.animationSpeed,
     activeTab: config.defaultTab,
     mapInitialized: false,
-    language: config.defaultLanguage
+    language: config.defaultLanguage,
+    use24HourFormat: true,
+    selectedHourIndex: null,
+    selectedDayIndex: null,
+    hourlyData: null
 };
 
 // DOM Elements
@@ -347,8 +359,6 @@ const elements = {
     installText: document.getElementById('installText'),
     installBtn: document.getElementById('installBtn'),
     dismissBtn: document.getElementById('dismissBtn'),
-    // Language toggle
-    langToggle: document.getElementById('langToggle'),
     appTitle: document.getElementById('appTitle'),
     // Tab elements
     tabNavigation: document.getElementById('tabNavigation'),
@@ -386,7 +396,17 @@ const elements = {
     settingsTitle: document.getElementById('settingsTitle'),
     settingsLocationTitle: document.getElementById('settingsLocationTitle'),
     settingsLocationDesc: document.getElementById('settingsLocationDesc'),
-    useMyLocationText: document.getElementById('useMyLocationText')
+    useMyLocationText: document.getElementById('useMyLocationText'),
+    // Time format settings
+    settingsTimeFormatTitle: document.getElementById('settingsTimeFormatTitle'),
+    timeFormat24hBtn: document.getElementById('timeFormat24hBtn'),
+    timeFormat12hBtn: document.getElementById('timeFormat12hBtn'),
+    timeFormat24hText: document.getElementById('timeFormat24hText'),
+    timeFormat12hText: document.getElementById('timeFormat12hText'),
+    // Language settings
+    settingsLanguageTitle: document.getElementById('settingsLanguageTitle'),
+    langNlBtn: document.getElementById('langNlBtn'),
+    langEnBtn: document.getElementById('langEnBtn')
 };
 
 // Initialize the app
@@ -397,11 +417,19 @@ async function init() {
         state.language = savedLang;
     }
     
+    // Load saved time format
+    const savedTimeFormat = localStorage.getItem('weatherTimeFormat');
+    if (savedTimeFormat !== null) {
+        state.use24HourFormat = savedTimeFormat === '24h';
+    }
+    
     registerServiceWorker();
     setupEventListeners();
     setupTabs();
     updateDateTime();
     updateUILanguage();
+    updateTimeFormatButtons();
+    updateLanguageButtons();
     setInterval(updateDateTime, 60000);
     
     // Try to load saved location or auto-detect current location
@@ -433,6 +461,37 @@ function closeSettings() {
     }
 }
 
+// Time format functions
+function setTimeFormat(format) {
+    state.use24HourFormat = format === '24h';
+    localStorage.setItem('weatherTimeFormat', format);
+    updateTimeFormatButtons();
+    
+    // Re-render hourly forecast if available
+    if (state.weatherData) {
+        renderHourlyForecast(state.weatherData.hourly);
+    }
+}
+
+function updateTimeFormatButtons() {
+    if (elements.timeFormat24hBtn) {
+        elements.timeFormat24hBtn.classList.toggle('active', state.use24HourFormat);
+    }
+    if (elements.timeFormat12hBtn) {
+        elements.timeFormat12hBtn.classList.toggle('active', !state.use24HourFormat);
+    }
+}
+
+// Language button update
+function updateLanguageButtons() {
+    if (elements.langNlBtn) {
+        elements.langNlBtn.classList.toggle('active', state.language === 'nl');
+    }
+    if (elements.langEnBtn) {
+        elements.langEnBtn.classList.toggle('active', state.language === 'en');
+    }
+}
+
 // ========================================
 // LANGUAGE SWITCHING
 // ========================================
@@ -440,6 +499,7 @@ function switchLanguage(lang) {
     state.language = lang;
     localStorage.setItem('weatherLanguage', lang);
     updateUILanguage();
+    updateLanguageButtons();
     
     // Re-render weather data if available
     if (state.weatherData) {
@@ -459,12 +519,6 @@ function updateUILanguage() {
     // Update app title
     if (elements.appTitle) {
         elements.appTitle.textContent = t('ui.weather');
-    }
-    
-    // Update language toggle button
-    if (elements.langToggle) {
-        elements.langToggle.textContent = lang === 'nl' ? 'EN' : 'NL';
-        elements.langToggle.setAttribute('title', lang === 'nl' ? 'Switch to English' : 'Schakel naar Nederlands');
     }
     
     // Update search placeholder
@@ -543,6 +597,14 @@ function updateUILanguage() {
     if (elements.settingsLocationTitle) elements.settingsLocationTitle.textContent = t('ui.settingsLocation');
     if (elements.settingsLocationDesc) elements.settingsLocationDesc.textContent = t('ui.settingsLocationDesc');
     if (elements.useMyLocationText) elements.useMyLocationText.textContent = t('ui.useMyLocation');
+    
+    // Update time format settings
+    if (elements.settingsTimeFormatTitle) elements.settingsTimeFormatTitle.textContent = t('ui.settingsTimeFormat');
+    if (elements.timeFormat24hText) elements.timeFormat24hText.textContent = t('ui.timeFormat24h');
+    if (elements.timeFormat12hText) elements.timeFormat12hText.textContent = t('ui.timeFormat12h');
+    
+    // Update language settings
+    if (elements.settingsLanguageTitle) elements.settingsLanguageTitle.textContent = t('ui.settingsLanguage');
 }
 
 // Register Service Worker
@@ -592,12 +654,15 @@ function setupSwipeGestures() {
     let touchStartY = 0;
     let touchEndX = 0;
     let touchEndY = 0;
+    let touchStartedOnMap = false;
     const minSwipeDistance = 50;
     const maxVerticalDistance = 100;
     
     container.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
         touchStartY = e.changedTouches[0].screenY;
+        // Check if touch started on the map
+        touchStartedOnMap = e.target.closest('#precipMap') !== null;
     }, { passive: true });
     
     container.addEventListener('touchend', (e) => {
@@ -607,6 +672,9 @@ function setupSwipeGestures() {
     }, { passive: true });
     
     function handleSwipe() {
+        // Don't swipe when touch started on the map (allow map panning)
+        if (touchStartedOnMap) return;
+        
         const deltaX = touchEndX - touchStartX;
         const deltaY = Math.abs(touchEndY - touchStartY);
         
@@ -659,10 +727,12 @@ function switchTab(tabId) {
         }, 100);
     }
     
-    // Fix map size and autoplay if switching to radar tab
-    if (tabId === 'radar' && state.map) {
+    // Fix map size, center on location, and autoplay if switching to radar tab
+    if (tabId === 'radar' && state.map && state.currentLocation) {
         setTimeout(() => {
             state.map.invalidateSize();
+            // Center map on user's location
+            state.map.setView([state.currentLocation.latitude, state.currentLocation.longitude], 8);
             // Autoplay radar animation
             if (state.radarLayers.length > 0 && !state.isPlaying) {
                 startRadarAnimation();
@@ -707,6 +777,14 @@ function setupEventListeners() {
         });
     }
     
+    // Time format toggle
+    if (elements.timeFormat24hBtn) {
+        elements.timeFormat24hBtn.addEventListener('click', () => setTimeFormat('24h'));
+    }
+    if (elements.timeFormat12hBtn) {
+        elements.timeFormat12hBtn.addEventListener('click', () => setTimeFormat('12h'));
+    }
+    
     // Escape key to close modal
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && elements.settingsModal && !elements.settingsModal.classList.contains('hidden')) {
@@ -714,12 +792,12 @@ function setupEventListeners() {
         }
     });
     
-    // Language toggle
-    if (elements.langToggle) {
-        elements.langToggle.addEventListener('click', () => {
-            const newLang = state.language === 'nl' ? 'en' : 'nl';
-            switchLanguage(newLang);
-        });
+    // Language toggle buttons in settings
+    if (elements.langNlBtn) {
+        elements.langNlBtn.addEventListener('click', () => switchLanguage('nl'));
+    }
+    if (elements.langEnBtn) {
+        elements.langEnBtn.addEventListener('click', () => switchLanguage('en'));
     }
     
     // Search functionality
@@ -966,7 +1044,7 @@ async function fetchWeather() {
     elements.locationName.textContent = country ? `${name}, ${country}` : name;
     
     try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation&hourly=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation&hourly=temperature_2m,weather_code,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto`;
         
         const response = await fetch(url);
         
@@ -994,6 +1072,9 @@ function renderWeather(data) {
     const windKmh = Math.round(current.wind_speed_10m);
     const beaufort = getBeaufort(windKmh);
     const windDir = getWindDirection(current.wind_direction_10m);
+    
+    // Reset selected hour
+    state.selectedHourIndex = null;
     
     // Current weather
     elements.weatherIconLarge.textContent = weatherIcon;
@@ -1028,7 +1109,6 @@ function renderWeather(data) {
 // Render hourly forecast
 function renderHourlyForecast(hourly) {
     const now = new Date();
-    const currentHour = now.getHours();
     
     // Get next 24 hours
     const startIndex = hourly.time.findIndex(time => {
@@ -1040,20 +1120,77 @@ function renderHourlyForecast(hourly) {
     const temps = hourly.temperature_2m.slice(startIndex, startIndex + 24);
     const codes = hourly.weather_code.slice(startIndex, startIndex + 24);
     
+    // Store hourly data for detail view
+    state.hourlyData = { hours, temps, codes, startIndex };
+    
     elements.hourlyForecast.innerHTML = hours.map((time, index) => {
         const date = new Date(time);
         const hour = date.getHours();
         const isNow = index === 0;
         const icon = weatherIcons[codes[index]] || '🌡️';
+        const isSelected = state.selectedHourIndex === index;
         
         return `
-            <div class="hourly-item ${isNow ? 'now' : ''}">
+            <div class="hourly-item ${isNow ? 'now' : ''} ${isSelected ? 'selected' : ''}" data-index="${index}">
                 <div class="hourly-time">${isNow ? t('time.now') : formatHour(hour)}</div>
                 <div class="hourly-icon">${icon}</div>
                 <div class="hourly-temp">${Math.round(temps[index])}°</div>
             </div>
         `;
     }).join('');
+    
+    // Add click handlers to hourly items
+    elements.hourlyForecast.querySelectorAll('.hourly-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const index = parseInt(item.dataset.index);
+            selectHourlyItem(index);
+        });
+    });
+}
+
+// Select an hourly item and show details
+function selectHourlyItem(index) {
+    state.selectedHourIndex = index;
+    
+    // Update selected state visually
+    elements.hourlyForecast.querySelectorAll('.hourly-item').forEach((item, i) => {
+        item.classList.toggle('selected', i === index);
+    });
+    
+    // Show details in the current weather section (switch to current tab)
+    if (state.hourlyData && state.weatherData) {
+        const { hours, startIndex } = state.hourlyData;
+        const hourly = state.weatherData.hourly;
+        const dataIndex = startIndex + index;
+        
+        const date = new Date(hours[index]);
+        const weatherCode = hourly.weather_code[dataIndex];
+        const temp = hourly.temperature_2m[dataIndex];
+        const humidity = hourly.relative_humidity_2m[dataIndex];
+        const feelsLike = hourly.apparent_temperature[dataIndex];
+        const windSpeed = hourly.wind_speed_10m[dataIndex];
+        const windDir = hourly.wind_direction_10m[dataIndex];
+        const precip = hourly.precipitation[dataIndex];
+        
+        const icon = weatherIcons[weatherCode] || '🌡️';
+        const desc = getWeatherDescription(weatherCode);
+        const beaufort = getBeaufort(Math.round(windSpeed));
+        const windDirText = getWindDirection(windDir);
+        
+        // Switch to current tab to show details
+        switchTab('current');
+        
+        // Update current weather display with selected hour data
+        elements.weatherIconLarge.textContent = icon;
+        elements.currentTemp.textContent = Math.round(temp);
+        elements.weatherDescription.textContent = `${formatHour(date.getHours())} - ${desc}`;
+        
+        // Update detail cards
+        elements.windSpeed.innerHTML = `${windDirText} ${Math.round(windSpeed)} km/h<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
+        elements.humidity.textContent = `${humidity}%`;
+        elements.feelsLike.textContent = `${Math.round(feelsLike)}°C`;
+        elements.precipitation.textContent = `${precip} mm`;
+    }
 }
 
 // Render daily forecast
@@ -1068,9 +1205,10 @@ function renderDailyForecast(daily) {
             dayName = t(`days.${dayKeys[date.getDay()]}`);
         }
         const icon = weatherIcons[daily.weather_code[index]] || '🌡️';
-        
+        const isSelected = state.selectedDayIndex === index;
+
         return `
-            <div class="daily-item">
+            <div class="daily-item ${isSelected ? 'selected' : ''}" data-index="${index}">
                 <div class="daily-day">${dayName}</div>
                 <div class="daily-icon">${icon}</div>
                 <div class="daily-temps">
@@ -1080,13 +1218,64 @@ function renderDailyForecast(daily) {
             </div>
         `;
     }).join('');
+    
+    // Add click handlers to daily items
+    elements.dailyForecast.querySelectorAll('.daily-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const index = parseInt(item.dataset.index);
+            selectDailyItem(index);
+        });
+    });
 }
 
-// Format hour
-function formatHour(hour) {
-    if (hour === 0) return '12 AM';
-    if (hour === 12) return '12 PM';
-    return hour > 12 ? `${hour - 12} PM` : `${hour} AM`;
+// Select a daily item and show details
+function selectDailyItem(index) {
+    state.selectedDayIndex = index;
+    
+    // Update selected state visually
+    elements.dailyForecast.querySelectorAll('.daily-item').forEach((item, i) => {
+        item.classList.toggle('selected', i === index);
+    });
+    
+    // Show details in the current weather section
+    if (state.weatherData && state.weatherData.daily) {
+        const daily = state.weatherData.daily;
+        const weatherCode = daily.weather_code[index];
+        const maxTemp = daily.temperature_2m_max[index];
+        const minTemp = daily.temperature_2m_min[index];
+        const precipSum = daily.precipitation_sum[index];
+        const windMax = daily.wind_speed_10m_max[index];
+        const windDir = daily.wind_direction_10m_dominant[index];
+        
+        const icon = weatherIcons[weatherCode] || '🌡️';
+        const desc = getWeatherDescription(weatherCode);
+        const beaufort = getBeaufort(Math.round(windMax));
+        const windDirText = getWindDirection(windDir);
+        
+        // Get day name for display
+        const date = new Date(daily.time[index]);
+        let dayName;
+        if (index === 0) {
+            dayName = t('time.today');
+        } else {
+            const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            dayName = t(`days.${dayKeys[date.getDay()]}`);
+        }
+        
+        // Switch to current tab to show details
+        switchTab('current');
+        
+        // Update current weather display with selected day data
+        elements.weatherIconLarge.textContent = icon;
+        elements.currentTemp.textContent = `${Math.round(maxTemp)}/${Math.round(minTemp)}`;
+        elements.weatherDescription.textContent = `${dayName} - ${desc}`;
+        
+        // Update detail cards
+        elements.windSpeed.innerHTML = `${windDirText} ${Math.round(windMax)} km/h<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
+        elements.humidity.textContent = '-';
+        elements.feelsLike.textContent = '-';
+        elements.precipitation.textContent = `${precipSum} mm`;
+    }
 }
 
 // Update background based on weather
@@ -1114,6 +1303,7 @@ function updateBackground(weatherCode, temperature) {
 
 // Update date/time display
 function updateDateTime() {
+    if (!elements.locationTime) return;
     const now = new Date();
     const options = { 
         weekday: 'long', 

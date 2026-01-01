@@ -32,22 +32,16 @@
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1 class="app-title">
-                    <span class="weather-icon">☀️</span>
-                    <span id="appTitle">Weer</span>
-                </h1>
+                <h2 class="location-name" id="locationName">Laden...</h2>
                 <div class="header-buttons">
-                    <button class="lang-toggle-btn" id="langToggle" aria-label="Switch language">
-                        EN
-                    </button>
-                    <button class="location-btn" id="locationBtn" aria-label="Update location">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button class="icon-btn" id="locationBtn" aria-label="Update location">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="3"></circle>
                             <path d="M12 2v4m0 12v4M2 12h4m12 0h4"></path>
                         </svg>
                     </button>
-                    <button class="settings-btn" id="settingsBtn" aria-label="Settings">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button class="icon-btn" id="settingsBtn" aria-label="Settings">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="3"></circle>
                             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                         </svg>
@@ -55,12 +49,6 @@
                 </div>
             </div>
         </header>
-
-        <!-- Current Location Display -->
-        <section class="location-display">
-            <h2 class="location-name" id="locationName">Laden...</h2>
-            <p class="location-time" id="locationTime"></p>
-        </section>
 
         <!-- Loading State -->
         <div class="loading-state" id="loadingState">
@@ -187,20 +175,6 @@
                             <input type="range" id="timelineSlider" class="timeline-slider" min="0" max="12" value="6" aria-label="Timeline slider">
                             <span class="timeline-time" id="timelineTime">Nu</span>
                         </div>
-                        <div class="timeline-legend">
-                            <span class="legend-label" id="legendPast">-2 uur</span>
-                            <div class="legend-bar"></div>
-                            <span class="legend-label" id="legendFuture">+30 min</span>
-                        </div>
-                    </div>
-                    <div class="precipitation-legend">
-                        <span class="legend-title" id="legendIntensity">Intensiteit:</span>
-                        <div class="legend-scale">
-                            <div class="legend-item legend-light" id="legendLight">Licht</div>
-                            <div class="legend-item legend-moderate" id="legendModerate">Matig</div>
-                            <div class="legend-item legend-heavy" id="legendHeavy">Zwaar</div>
-                            <div class="legend-item legend-intense" id="legendIntense">Intens</div>
-                        </div>
                     </div>
                 </div>
             </section>
@@ -255,6 +229,32 @@
                         </svg>
                         <span id="useMyLocationText">Gebruik mijn locatie</span>
                     </button>
+                </div>
+                
+                <!-- Time Format Settings -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title" id="settingsTimeFormatTitle">Tijdnotatie</h3>
+                    <div class="settings-toggle-group">
+                        <button class="settings-toggle-btn active" id="timeFormat24hBtn" data-format="24h">
+                            <span id="timeFormat24hText">24-uurs</span>
+                        </button>
+                        <button class="settings-toggle-btn" id="timeFormat12hBtn" data-format="12h">
+                            <span id="timeFormat12hText">12-uurs</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Language Settings -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title" id="settingsLanguageTitle">Taal</h3>
+                    <div class="settings-toggle-group">
+                        <button class="settings-toggle-btn active" id="langNlBtn" data-lang="nl">
+                            <span>Nederlands</span>
+                        </button>
+                        <button class="settings-toggle-btn" id="langEnBtn" data-lang="en">
+                            <span>English</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
