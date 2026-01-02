@@ -2,14 +2,14 @@
     "name": "Weer",
     "short_name": "Weer",
     "description": "Je persoonlijke weer assistent - mooie weersvoorspellingen voor jouw locatie",
-    "start_url": "./",
-    "id": "weather-pwa",
+    "start_url": ".",
+    "id": "/Weather/",
     "display": "standalone",
     "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
     "background_color": "#667eea",
     "theme_color": "#667eea",
     "orientation": "portrait",
-    "scope": "./",
+    "scope": ".",
     "lang": "nl",
     "edge_side_panel": {
         "preferred_width": 400
