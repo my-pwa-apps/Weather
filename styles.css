@@ -1419,6 +1419,71 @@ body {
     to { transform: translateY(0); }
 }
 
+/* Update Toast */
+.update-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface-elevated);
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
+    animation: toastSlideUp 0.3s var(--ease-fluent);
+    border: 1px solid var(--border-subtle);
+}
+
+@keyframes toastSlideUp {
+    from { 
+        transform: translateX(-50%) translateY(100px);
+        opacity: 0;
+    }
+    to { 
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+.update-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.update-icon {
+    font-size: 1.2rem;
+}
+
+.update-content p {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.update-buttons {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.update-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.update-btn:hover {
+    background: var(--primary-dark);
+}
+
 .install-content {
     max-width: 400px;
     margin: 0 auto;

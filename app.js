@@ -110,7 +110,10 @@ const translations = {
             favorites: 'Favorieten',
             addToFavorites: 'Toevoegen aan favorieten',
             removeFromFavorites: 'Verwijderen',
-            noFavorites: 'Geen favorieten opgeslagen'
+            noFavorites: 'Geen favorieten opgeslagen',
+            updateAvailable: 'Er is een update beschikbaar',
+            refresh: 'Vernieuwen',
+            later: 'Later'
         },
         // Wind directions
         windDir: {
@@ -246,7 +249,10 @@ const translations = {
             favorites: 'Favorites',
             addToFavorites: 'Add to favorites',
             removeFromFavorites: 'Remove',
-            noFavorites: 'No favorites saved'
+            noFavorites: 'No favorites saved',
+            updateAvailable: 'Update available',
+            refresh: 'Refresh',
+            later: 'Later'
         },
         // Wind directions
         windDir: {
@@ -919,15 +925,64 @@ function updateUILanguage() {
 }
 
 // Register Service Worker
+let newWorker = null;
+
 async function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         try {
             const registration = await navigator.serviceWorker.register('sw.js');
             console.log('SW registered:', registration);
+            
+            // Check for updates
+            registration.addEventListener('updatefound', () => {
+                newWorker = registration.installing;
+                console.log('SW update found');
+                
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        // New version available
+                        console.log('New SW version available');
+                        showUpdateToast();
+                    }
+                });
+            });
+            
+            // Handle controller change (when new SW takes over)
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                console.log('SW controller changed, reloading...');
+                window.location.reload();
+            });
+            
         } catch (error) {
             console.log('SW registration failed:', error);
         }
     }
+}
+
+function showUpdateToast() {
+    const toast = document.getElementById('updateToast');
+    const updateBtn = document.getElementById('updateBtn');
+    const dismissBtn = document.getElementById('dismissUpdateBtn');
+    const updateText = document.getElementById('updateText');
+    
+    // Set translated text
+    updateText.textContent = t('ui.updateAvailable');
+    updateBtn.textContent = t('ui.refresh');
+    dismissBtn.textContent = t('ui.later');
+    
+    toast.classList.remove('hidden');
+    
+    updateBtn.addEventListener('click', () => {
+        if (newWorker) {
+            // Tell the new service worker to skip waiting
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+        }
+        toast.classList.add('hidden');
+    });
+    
+    dismissBtn.addEventListener('click', () => {
+        toast.classList.add('hidden');
+    });
 }
 
 // ========================================
@@ -1643,7 +1698,7 @@ function renderDailyForecast(daily) {
             const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
             dayName = t(`days.${dayKeys[date.getDay()]}`);
         }
-        const icon = weatherIcons[daily.weather_code[index]] || '🌡️';
+        const icon = getWeatherIcon(daily.weather_code[index], true);
         const isSelected = state.selectedDayIndex === index;
 
         return `

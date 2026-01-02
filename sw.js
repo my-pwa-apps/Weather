@@ -3,7 +3,7 @@
  * Handles caching and offline functionality
  */
 
-const CACHE_NAME = 'weather-v24';
+const CACHE_NAME = 'weather-v26';
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -28,7 +28,7 @@ self.addEventListener('install', (event) => {
                 console.log('[SW] Caching static assets');
                 return cache.addAll(STATIC_ASSETS);
             })
-            .then(() => self.skipWaiting())
+            // Don't skip waiting automatically - wait for user confirmation
     );
 });
 
@@ -56,6 +56,10 @@ let widgetLocationCache = null;
 
 // Handle messages from clients
 self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        console.log('[SW] Received SKIP_WAITING message, activating new version...');
+        self.skipWaiting();
+    }
     if (event.data && event.data.type === 'WIDGET_LOCATION_UPDATE') {
         widgetLocationCache = event.data.location;
         console.log('[SW] Widget location updated:', widgetLocationCache);

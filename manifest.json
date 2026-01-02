@@ -77,7 +77,7 @@
             "name": "Bekijk Weer",
             "short_name": "Weer",
             "description": "Bekijk het huidige weer",
-            "url": "/",
+            "url": "./",
             "icons": [
                 {
                     "src": "icons/icon-192.png",
