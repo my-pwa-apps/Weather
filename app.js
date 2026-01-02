@@ -1900,7 +1900,7 @@ function selectDailyItem(index) {
         const sunrise = daily.sunrise ? daily.sunrise[index] : null;
         const sunset = daily.sunset ? daily.sunset[index] : null;
         
-        const icon = weatherIcons[weatherCode] || '🌡️';
+        const icon = getWeatherIcon(weatherCode, true);
         const desc = getWeatherDescription(weatherCode);
         const beaufort = getBeaufort(Math.round(windMax));
         const windDirText = getWindDirection(windDir);
