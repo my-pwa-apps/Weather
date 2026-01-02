@@ -106,12 +106,7 @@ const translations = {
             themeLight: 'Licht',
             themeDark: 'Donker',
             back: 'Terug',
-            highLow: 'Hoog / Laag',
-            radarSource: 'Radarbron',
-            radarRainviewer: 'RainViewer',
-            radarBuienradar: 'Buienradar',
-            radarCoverageWorld: 'Wereldwijd',
-            radarCoverageNLBE: 'NL/BE'
+            highLow: 'Hoog / Laag'
         },
         // Wind directions
         windDir: {
@@ -243,12 +238,7 @@ const translations = {
             themeLight: 'Light',
             themeDark: 'Dark',
             back: 'Back',
-            highLow: 'High / Low',
-            radarSource: 'Radar source',
-            radarRainviewer: 'RainViewer',
-            radarBuienradar: 'Buienradar',
-            radarCoverageWorld: 'Worldwide',
-            radarCoverageNLBE: 'NL/BE'
+            highLow: 'High / Low'
         },
         // Wind directions
         windDir: {
@@ -353,29 +343,6 @@ const mapTiles = {
     }
 };
 
-// ========================================
-// RADAR SOURCE CONFIGURATIONS
-// ========================================
-const radarSources = {
-    rainviewer: {
-        name: 'RainViewer',
-        coverage: 'Wereldwijd',
-        coverageEn: 'Worldwide',
-        maxForecast: 30 // minutes
-    },
-    buienradar: {
-        name: 'Buienradar',
-        coverage: 'Nederland/België',
-        coverageEn: 'Netherlands/Belgium',
-        maxForecast: 120, // minutes
-        // Buienradar image bounds (Netherlands region - lat/lng)
-        // Bottom-left: 48.895, 0.0 | Top-right: 55.973, 10.856
-        bounds: [[48.895, 0.0], [55.973, 10.856]],
-        // Image dimensions for proper aspect ratio
-        imageWidth: 550,
-        imageHeight: 512
-    }
-};
 
 // ========================================
 // CONFIGURATION
@@ -409,7 +376,6 @@ const state = {
     activeTab: config.defaultTab,
     mapInitialized: false,
     mapStyle: 'satellite',
-    radarSource: 'buienradar',
     baseLayer: null,
     language: config.defaultLanguage,
     theme: 'dark',
@@ -464,7 +430,6 @@ const elements = {
     precipMap: document.getElementById('precipMap'),
     mapOverlay: document.getElementById('mapOverlay'),
     loadingRadar: document.getElementById('loadingRadar'),
-    radarSourceSelect: document.getElementById('radarSourceSelect'),
     mapStyleSelect: document.getElementById('mapStyleSelect'),
     speedSelect: document.getElementById('speedSelect'),
     playPauseBtn: document.getElementById('playPauseBtn'),
@@ -1077,20 +1042,6 @@ function setupEventListeners() {
     elements.dismissBtn.addEventListener('click', () => {
         elements.installPrompt.classList.add('hidden');
     });
-    
-    // Radar source selector
-    if (elements.radarSourceSelect) {
-        // Load saved radar source
-        const savedSource = localStorage.getItem('radarSource');
-        if (savedSource) {
-            state.radarSource = savedSource;
-            elements.radarSourceSelect.value = savedSource;
-        }
-        
-        elements.radarSourceSelect.addEventListener('change', (e) => {
-            setRadarSource(e.target.value);
-        });
-    }
     
     // Map style selector
     if (elements.mapStyleSelect) {
@@ -1767,123 +1718,9 @@ function setMapStyle(style) {
     localStorage.setItem('mapStyle', style);
 }
 
-// Set radar source
-function setRadarSource(source) {
-    if (!radarSources[source]) return;
-    
-    // Stop any running animation
-    stopRadarAnimation();
-    
-    // Clear existing radar layers
-    clearRadarLayers();
-    
-    // Update state
-    state.radarSource = source;
-    localStorage.setItem('radarSource', source);
-    
-    // If switching to Buienradar, auto-fit to Netherlands region
-    if (source === 'buienradar' && state.map) {
-        const bounds = radarSources.buienradar.bounds;
-        state.map.fitBounds(bounds, { padding: [20, 20] });
-    }
-    
-    // Reload radar data with new source
-    loadRadarData();
-}
-
-// Clear all radar layers from the map
-function clearRadarLayers() {
-    // Clear RainViewer layers
-    state.radarLayers.forEach(item => {
-        if (state.map && state.map.hasLayer(item.layer)) {
-            state.map.removeLayer(item.layer);
-        }
-    });
-    state.radarLayers = [];
-    
-    // Clear Buienradar layers
-    state.buienradarLayers.forEach(item => {
-        if (state.map && state.map.hasLayer(item.layer)) {
-            state.map.removeLayer(item.layer);
-        }
-    });
-    state.buienradarLayers = [];
-}
-
-// Load radar data based on current source
-async function loadRadarData() {
-    if (state.radarSource === 'buienradar') {
-        await loadBuienradarData();
-    } else {
-        await loadRainviewerData();
-    }
-}
-
-// Load radar data from Buienradar API
-async function loadBuienradarData() {
-    elements.mapOverlay.classList.remove('hidden');
-    
-    try {
-        // Buienradar provides radar images via their API
-        // We'll use their image API which provides current + forecast
-        const now = new Date();
-        
-        // Buienradar radar image bounds (Netherlands region - lat/lng)
-        const bounds = radarSources.buienradar.bounds;
-        
-        // Clear existing layers
-        state.buienradarLayers = [];
-        
-        // Buienradar's main radar API - provides current radar view
-        // Adding cache-buster to prevent stale images
-        const cacheBuster = Math.floor(Date.now() / 60000); // Changes every minute
-        const url = `https://api.buienradar.nl/image/1.0/RadarMapNL?w=550&h=512&cb=${cacheBuster}`;
-        
-        // Create a single layer for the current radar
-        const layer = L.imageOverlay(url, bounds, {
-            opacity: 0.7,
-            zIndex: 5
-        });
-        
-        state.buienradarLayers.push({
-            layer: layer,
-            time: Math.floor(now.getTime() / 1000),
-            isForecast: false
-        });
-        
-        state.radarNowIndex = 0;
-        state.radarLayers = state.buienradarLayers;
-        
-        // Update slider range
-        elements.timelineSlider.max = 0;
-        elements.timelineSlider.value = 0;
-        state.currentRadarIndex = 0;
-        
-        // Add layer to map
-        layer.addTo(state.map);
-        
-        // Update timeline display
-        elements.timelineTime.textContent = t('ui.timelineNow');
-        
-        // Hide play/pause for single frame
-        elements.playPauseBtn.style.display = 'none';
-        elements.timelineSlider.style.display = 'none';
-        
-        elements.mapOverlay.classList.add('hidden');
-        
-    } catch (error) {
-        console.error('Error loading Buienradar data:', error);
-        elements.mapOverlay.classList.add('hidden');
-    }
-}
-
 // Load radar data from RainViewer API
-async function loadRainviewerData() {
+async function loadRadarData() {
     elements.mapOverlay.classList.remove('hidden');
-    
-    // Restore playback controls (may have been hidden by Buienradar)
-    elements.playPauseBtn.style.display = '';
-    elements.timelineSlider.style.display = '';
     
     try {
         const response = await fetch('https://api.rainviewer.com/public/weather-maps.json');
