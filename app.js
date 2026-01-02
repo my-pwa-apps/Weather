@@ -63,7 +63,6 @@ const translations = {
             speedSlow: 'Langzaam',
             speedVerySlow: 'Zeer langzaam',
             mapStyle: 'Kaartstijl',
-            mapVoyager: 'Voyager',
             mapLight: 'Licht',
             mapDark: 'Donker',
             mapSatellite: 'Satelliet',
@@ -202,7 +201,6 @@ const translations = {
             speedSlow: 'Slow',
             speedVerySlow: 'Very slow',
             mapStyle: 'Map style',
-            mapVoyager: 'Voyager',
             mapLight: 'Light',
             mapDark: 'Dark',
             mapSatellite: 'Satellite',
@@ -346,12 +344,6 @@ const debounce = (func, wait) => {
 // MAP TILE CONFIGURATIONS
 // ========================================
 const mapTiles = {
-    voyager: {
-        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        isDark: false
-    },
     light: {
         url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -871,11 +863,10 @@ function updateUILanguage() {
     // Update map style selector
     if (elements.mapStyleSelect) {
         const options = elements.mapStyleSelect.options;
-        if (options.length >= 4) {
-            options[0].textContent = t('ui.mapVoyager');
-            options[1].textContent = t('ui.mapLight');
-            options[2].textContent = t('ui.mapDark');
-            options[3].textContent = t('ui.mapSatellite');
+        if (options.length >= 3) {
+            options[0].textContent = t('ui.mapLight');
+            options[1].textContent = t('ui.mapDark');
+            options[2].textContent = t('ui.mapSatellite');
         }
     }
     
