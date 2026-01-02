@@ -66,17 +66,23 @@
 html {
     font-size: 16px;
     -webkit-tap-highlight-color: transparent;
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
 }
 
 /* Base body - fill viewport exactly */
 body {
     font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, sans-serif;
     background: var(--primary-gradient);
-    height: 100vh;
+    height: 100%;
     height: 100dvh;
+    max-height: 100dvh;
     overflow: hidden;
     color: var(--text-primary);
     line-height: 1.4;
+    margin: 0;
+    padding: 0;
 }
 
 /* App Container - fixed height, flex layout */
@@ -86,8 +92,9 @@ body {
     max-width: 500px;
     margin: 0 auto;
     padding: var(--space-md);
-    height: 100vh;
+    height: 100%;
     height: 100dvh;
+    max-height: 100dvh;
     overflow: hidden;
 }
 
