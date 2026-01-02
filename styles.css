@@ -206,6 +206,7 @@ body {
 .favorites-search-section {
     padding: 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
 }
 
 .favorites-search-section .search-container.compact {
@@ -251,16 +252,29 @@ body {
 }
 
 .favorites-search-section .search-suggestions {
+    position: relative;
     margin-top: 8px;
-    background: transparent;
-    border: none;
+    background: rgba(40, 40, 60, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
     box-shadow: none;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.favorites-search-section .search-suggestions:empty {
+    display: none;
 }
 
 .favorites-search-section .suggestion-item {
     padding: 10px 12px;
     border-radius: var(--radius-sm);
     color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.favorites-search-section .suggestion-item:last-child {
+    border-bottom: none;
 }
 
 .favorites-search-section .suggestion-item:hover {
