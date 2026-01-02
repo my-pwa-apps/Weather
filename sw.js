@@ -3,7 +3,7 @@
  * Handles caching and offline functionality
  */
 
-const CACHE_NAME = 'weather-v26';
+const CACHE_NAME = 'weather-v27';
 const STATIC_ASSETS = [
     './',
     './index.html',
