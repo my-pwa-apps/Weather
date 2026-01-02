@@ -99,6 +99,12 @@ const translations = {
             settingsTimeFormat: 'Tijdnotatie',
             timeFormat24h: '24-uurs',
             timeFormat12h: '12-uurs',
+            settingsTemperature: 'Temperatuur',
+            celsius: 'Celsius',
+            fahrenheit: 'Fahrenheit',
+            settingsUnits: 'Eenheden',
+            metric: 'Metrisch',
+            imperial: 'Imperiaal',
             settingsLanguage: 'Taal',
             settingsAppearance: 'Weergave',
             themeAuto: 'Auto',
@@ -237,6 +243,12 @@ const translations = {
             settingsTimeFormat: 'Time format',
             timeFormat24h: '24-hour',
             timeFormat12h: '12-hour',
+            settingsTemperature: 'Temperature',
+            celsius: 'Celsius',
+            fahrenheit: 'Fahrenheit',
+            settingsUnits: 'Units',
+            metric: 'Metric',
+            imperial: 'Imperial',
             settingsLanguage: 'Language',
             settingsAppearance: 'Appearance',
             themeAuto: 'Auto',
@@ -402,6 +414,8 @@ const state = {
     language: config.defaultLanguage,
     theme: 'dark',
     use24HourFormat: true,
+    useCelsius: true,
+    useMetric: true,
     selectedHourIndex: null,
     selectedDayIndex: null,
     hourlyData: null
@@ -484,6 +498,18 @@ const elements = {
     timeFormat12hBtn: document.getElementById('timeFormat12hBtn'),
     timeFormat24hText: document.getElementById('timeFormat24hText'),
     timeFormat12hText: document.getElementById('timeFormat12hText'),
+    // Temperature settings
+    settingsTemperatureTitle: document.getElementById('settingsTemperatureTitle'),
+    tempCelsiusBtn: document.getElementById('tempCelsiusBtn'),
+    tempFahrenheitBtn: document.getElementById('tempFahrenheitBtn'),
+    tempCelsiusText: document.getElementById('tempCelsiusText'),
+    tempFahrenheitText: document.getElementById('tempFahrenheitText'),
+    // Units settings
+    settingsUnitsTitle: document.getElementById('settingsUnitsTitle'),
+    unitsMetricBtn: document.getElementById('unitsMetricBtn'),
+    unitsImperialBtn: document.getElementById('unitsImperialBtn'),
+    unitsMetricText: document.getElementById('unitsMetricText'),
+    unitsImperialText: document.getElementById('unitsImperialText'),
     // Language settings
     settingsLanguageTitle: document.getElementById('settingsLanguageTitle'),
     langNlBtn: document.getElementById('langNlBtn'),
@@ -542,6 +568,18 @@ async function init() {
         state.use24HourFormat = savedTimeFormat === '24h';
     }
     
+    // Load saved temperature unit
+    const savedTempUnit = localStorage.getItem('weatherTempUnit');
+    if (savedTempUnit !== null) {
+        state.useCelsius = savedTempUnit === 'celsius';
+    }
+    
+    // Load saved unit system
+    const savedUnitSystem = localStorage.getItem('weatherUnitSystem');
+    if (savedUnitSystem !== null) {
+        state.useMetric = savedUnitSystem === 'metric';
+    }
+    
     // Load saved theme
     const savedTheme = localStorage.getItem('weatherTheme');
     if (savedTheme && ['auto', 'light', 'dark'].includes(savedTheme)) {
@@ -564,6 +602,8 @@ async function init() {
     updateDateTime();
     updateUILanguage();
     updateTimeFormatButtons();
+    updateTemperatureButtons();
+    updateUnitButtons();
     updateLanguageButtons();
     updateThemeButtons();
     setInterval(updateDateTime, 60000);
@@ -774,6 +814,82 @@ function updateTimeFormatButtons() {
     }
 }
 
+// Temperature unit functions
+function setTemperatureUnit(unit) {
+    state.useCelsius = unit === 'celsius';
+    localStorage.setItem('weatherTempUnit', unit);
+    updateTemperatureButtons();
+    
+    // Re-render weather if available
+    if (state.weatherData) {
+        updateWeatherDisplay(state.weatherData);
+    }
+}
+
+function updateTemperatureButtons() {
+    if (elements.tempCelsiusBtn) {
+        elements.tempCelsiusBtn.classList.toggle('active', state.useCelsius);
+    }
+    if (elements.tempFahrenheitBtn) {
+        elements.tempFahrenheitBtn.classList.toggle('active', !state.useCelsius);
+    }
+}
+
+// Unit system functions (metric/imperial)
+function setUnitSystem(system) {
+    state.useMetric = system === 'metric';
+    localStorage.setItem('weatherUnitSystem', system);
+    updateUnitButtons();
+    
+    // Re-render weather if available
+    if (state.weatherData) {
+        updateWeatherDisplay(state.weatherData);
+    }
+}
+
+function updateUnitButtons() {
+    if (elements.unitsMetricBtn) {
+        elements.unitsMetricBtn.classList.toggle('active', state.useMetric);
+    }
+    if (elements.unitsImperialBtn) {
+        elements.unitsImperialBtn.classList.toggle('active', !state.useMetric);
+    }
+}
+
+// Conversion helper functions
+function convertTemp(celsius) {
+    if (state.useCelsius) {
+        return Math.round(celsius);
+    }
+    return Math.round((celsius * 9/5) + 32);
+}
+
+function getTempUnit() {
+    return state.useCelsius ? '°C' : '°F';
+}
+
+function convertSpeed(kmh) {
+    if (state.useMetric) {
+        return Math.round(kmh);
+    }
+    return Math.round(kmh * 0.621371); // Convert to mph
+}
+
+function getSpeedUnit() {
+    return state.useMetric ? 'km/h' : 'mph';
+}
+
+function convertPrecip(mm) {
+    if (state.useMetric) {
+        return mm;
+    }
+    return (mm * 0.0393701).toFixed(2); // Convert to inches
+}
+
+function getPrecipUnit() {
+    return state.useMetric ? 'mm' : 'in';
+}
+
 // Language button update
 function updateLanguageButtons() {
     if (elements.langNlBtn) {
@@ -901,6 +1017,16 @@ function updateUILanguage() {
     if (elements.settingsTimeFormatTitle) elements.settingsTimeFormatTitle.textContent = t('ui.settingsTimeFormat');
     if (elements.timeFormat24hText) elements.timeFormat24hText.textContent = t('ui.timeFormat24h');
     if (elements.timeFormat12hText) elements.timeFormat12hText.textContent = t('ui.timeFormat12h');
+    
+    // Update temperature settings
+    if (elements.settingsTemperatureTitle) elements.settingsTemperatureTitle.textContent = t('ui.settingsTemperature');
+    if (elements.tempCelsiusText) elements.tempCelsiusText.textContent = t('ui.celsius');
+    if (elements.tempFahrenheitText) elements.tempFahrenheitText.textContent = t('ui.fahrenheit');
+    
+    // Update units settings
+    if (elements.settingsUnitsTitle) elements.settingsUnitsTitle.textContent = t('ui.settingsUnits');
+    if (elements.unitsMetricText) elements.unitsMetricText.textContent = t('ui.metric');
+    if (elements.unitsImperialText) elements.unitsImperialText.textContent = t('ui.imperial');
     
     // Update language settings
     if (elements.settingsLanguageTitle) elements.settingsLanguageTitle.textContent = t('ui.settingsLanguage');
@@ -1199,6 +1325,22 @@ function setupEventListeners() {
     }
     if (elements.timeFormat12hBtn) {
         elements.timeFormat12hBtn.addEventListener('click', () => setTimeFormat('12h'));
+    }
+    
+    // Temperature unit toggle
+    if (elements.tempCelsiusBtn) {
+        elements.tempCelsiusBtn.addEventListener('click', () => setTemperatureUnit('celsius'));
+    }
+    if (elements.tempFahrenheitBtn) {
+        elements.tempFahrenheitBtn.addEventListener('click', () => setTemperatureUnit('fahrenheit'));
+    }
+    
+    // Unit system toggle
+    if (elements.unitsMetricBtn) {
+        elements.unitsMetricBtn.addEventListener('click', () => setUnitSystem('metric'));
+    }
+    if (elements.unitsImperialBtn) {
+        elements.unitsImperialBtn.addEventListener('click', () => setUnitSystem('imperial'));
     }
     
     // Escape key to close modal
@@ -1515,14 +1657,37 @@ async function fetchWeather() {
     }
 }
 
+// Update weather display with current unit settings (called when units change)
+function updateWeatherDisplay(data) {
+    const current = data.current;
+    const isDay = current.is_day === 1;
+    const windSpeed = convertSpeed(current.wind_speed_10m);
+    const beaufort = getBeaufort(Math.round(current.wind_speed_10m));
+    const windDir = getWindDirection(current.wind_direction_10m);
+    
+    // Update current weather
+    elements.currentTemp.textContent = convertTemp(current.temperature_2m);
+    elements.windSpeed.innerHTML = `${windDir} ${windSpeed} ${getSpeedUnit()}<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
+    elements.feelsLike.textContent = `${convertTemp(current.apparent_temperature)}${getTempUnit()}`;
+    elements.precipitation.textContent = `${convertPrecip(current.precipitation)} ${getPrecipUnit()}`;
+    
+    // Update temperature unit display in HTML
+    const tempUnitEl = document.querySelector('.temperature-unit');
+    if (tempUnitEl) tempUnitEl.textContent = getTempUnit();
+    
+    // Re-render forecasts
+    renderHourlyForecast(data.hourly);
+    renderDailyForecast(data.daily);
+}
+
 // Render weather data
 function renderWeather(data) {
     const current = data.current;
     const isDay = current.is_day === 1;
     const weatherIcon = getWeatherIcon(current.weather_code, isDay);
     const weatherDesc = getWeatherDescription(current.weather_code);
-    const windKmh = Math.round(current.wind_speed_10m);
-    const beaufort = getBeaufort(windKmh);
+    const windSpeed = convertSpeed(current.wind_speed_10m);
+    const beaufort = getBeaufort(Math.round(current.wind_speed_10m));
     const windDir = getWindDirection(current.wind_direction_10m);
     
     // Reset selected hour
@@ -1530,12 +1695,16 @@ function renderWeather(data) {
     
     // Current weather
     elements.weatherIconLarge.textContent = weatherIcon;
-    elements.currentTemp.textContent = Math.round(current.temperature_2m);
+    elements.currentTemp.textContent = convertTemp(current.temperature_2m);
     elements.weatherDescription.textContent = weatherDesc;
-    elements.windSpeed.innerHTML = `${windDir} ${windKmh} km/h<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
+    elements.windSpeed.innerHTML = `${windDir} ${windSpeed} ${getSpeedUnit()}<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
     elements.humidity.textContent = `${current.relative_humidity_2m}%`;
-    elements.feelsLike.textContent = `${Math.round(current.apparent_temperature)}°C`;
-    elements.precipitation.textContent = `${current.precipitation} mm`;
+    elements.feelsLike.textContent = `${convertTemp(current.apparent_temperature)}${getTempUnit()}`;
+    elements.precipitation.textContent = `${convertPrecip(current.precipitation)} ${getPrecipUnit()}`;
+    
+    // Update temperature unit display in HTML
+    const tempUnitEl = document.querySelector('.temperature-unit');
+    if (tempUnitEl) tempUnitEl.textContent = getTempUnit();
     
     // Hourly forecast
     renderHourlyForecast(data.hourly);
@@ -1588,7 +1757,7 @@ function renderHourlyForecast(hourly) {
             <div class="hourly-item ${isSelected ? 'selected' : ''}" data-index="${index}">
                 <div class="hourly-time">${isNow ? t('time.now') : formatHour(hour)}</div>
                 <div class="hourly-icon">${icon}</div>
-                <div class="hourly-temp">${Math.round(temps[index])}°</div>
+                <div class="hourly-temp">${convertTemp(temps[index])}°</div>
             </div>
         `;
     }).join('');
@@ -1634,12 +1803,16 @@ function selectHourlyItem(index) {
         
         // Update hourly detail overlay
         elements.hourlyDetailIcon.textContent = icon;
-        elements.hourlyDetailTemp.textContent = Math.round(temp);
+        elements.hourlyDetailTemp.textContent = convertTemp(temp);
         elements.hourlyDetailDesc.textContent = `${formatHour(date.getHours())} - ${desc}`;
-        elements.hourlyDetailWind.innerHTML = `${windDirText} ${Math.round(windSpeed)} km/h<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
+        elements.hourlyDetailWind.innerHTML = `${windDirText} ${convertSpeed(windSpeed)} ${getSpeedUnit()}<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
         elements.hourlyDetailHumidity.textContent = `${humidity}%`;
-        elements.hourlyDetailFeelsLike.textContent = `${Math.round(feelsLike)}°C`;
-        elements.hourlyDetailPrecip.textContent = `${precip} mm`;
+        elements.hourlyDetailFeelsLike.textContent = `${convertTemp(feelsLike)}${getTempUnit()}`;
+        elements.hourlyDetailPrecip.textContent = `${convertPrecip(precip)} ${getPrecipUnit()}`;
+        
+        // Update temp unit in overlay
+        const hourlyTempUnit = document.querySelector('#hourlyDetailOverlay .temp-unit');
+        if (hourlyTempUnit) hourlyTempUnit.textContent = getTempUnit();
         
         // Update labels
         elements.hourlyDetailWindLabel.textContent = t('ui.wind');
@@ -1681,8 +1854,8 @@ function renderDailyForecast(daily) {
                 <div class="daily-day">${dayName}</div>
                 <div class="daily-icon">${icon}</div>
                 <div class="daily-temps">
-                    <span class="daily-high">${Math.round(daily.temperature_2m_max[index])}°</span>
-                    <span class="daily-low">${Math.round(daily.temperature_2m_min[index])}°</span>
+                    <span class="daily-high">${convertTemp(daily.temperature_2m_max[index])}°</span>
+                    <span class="daily-low">${convertTemp(daily.temperature_2m_min[index])}°</span>
                 </div>
             </div>
         `;
@@ -1736,10 +1909,10 @@ function selectDailyItem(index) {
         elements.dailyDetailIcon.textContent = icon;
         elements.dailyDetailTemp.textContent = `${dayName}`;
         elements.dailyDetailDesc.textContent = desc;
-        elements.dailyDetailWind.innerHTML = `${windDirText} ${Math.round(windMax)} km/h<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
+        elements.dailyDetailWind.innerHTML = `${windDirText} ${convertSpeed(windMax)} ${getSpeedUnit()}<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
         elements.dailyDetailHumidity.textContent = humidity !== null ? `${Math.round(humidity)}%` : '-';
-        elements.dailyDetailHighLow.textContent = `${Math.round(maxTemp)}° / ${Math.round(minTemp)}°`;
-        elements.dailyDetailPrecip.textContent = `${precipSum} mm`;
+        elements.dailyDetailHighLow.textContent = `${convertTemp(maxTemp)}° / ${convertTemp(minTemp)}°`;
+        elements.dailyDetailPrecip.textContent = `${convertPrecip(precipSum)} ${getPrecipUnit()}`;
         
         // Update labels
         elements.dailyDetailWindLabel.textContent = t('ui.wind');
