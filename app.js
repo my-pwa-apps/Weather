@@ -62,6 +62,11 @@ const translations = {
             speedNormal: 'Normaal',
             speedSlow: 'Langzaam',
             speedVerySlow: 'Zeer langzaam',
+            mapStyle: 'Kaartstijl',
+            mapVoyager: 'Voyager',
+            mapLight: 'Licht',
+            mapDark: 'Donker',
+            mapSatellite: 'Satelliet',
             intensity: 'Intensiteit:',
             light: 'Licht',
             moderate: 'Matig',
@@ -185,6 +190,11 @@ const translations = {
             speedNormal: 'Normal',
             speedSlow: 'Slow',
             speedVerySlow: 'Very slow',
+            mapStyle: 'Map style',
+            mapVoyager: 'Voyager',
+            mapLight: 'Light',
+            mapDark: 'Dark',
+            mapSatellite: 'Satellite',
             intensity: 'Intensity:',
             light: 'Light',
             moderate: 'Moderate',
@@ -296,6 +306,36 @@ const debounce = (func, wait) => {
 };
 
 // ========================================
+// MAP TILE CONFIGURATIONS
+// ========================================
+const mapTiles = {
+    voyager: {
+        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        isDark: false
+    },
+    light: {
+        url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        isDark: false
+    },
+    dark: {
+        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        isDark: true
+    },
+    satellite: {
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attribution: '&copy; Esri &mdash; Source: Esri, i-cubed, USDA, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+        subdomains: null,
+        isDark: true
+    }
+};
+
+// ========================================
 // CONFIGURATION
 // ========================================
 const config = {
@@ -325,6 +365,8 @@ const state = {
     animationSpeed: config.animationSpeed,
     activeTab: config.defaultTab,
     mapInitialized: false,
+    mapStyle: 'voyager',
+    baseLayer: null,
     language: config.defaultLanguage,
     use24HourFormat: true,
     selectedHourIndex: null,
@@ -377,7 +419,7 @@ const elements = {
     precipMap: document.getElementById('precipMap'),
     mapOverlay: document.getElementById('mapOverlay'),
     loadingRadar: document.getElementById('loadingRadar'),
-    speedLabel: document.getElementById('speedLabel'),
+    mapStyleSelect: document.getElementById('mapStyleSelect'),
     speedSelect: document.getElementById('speedSelect'),
     playPauseBtn: document.getElementById('playPauseBtn'),
     playIcon: document.getElementById('playIcon'),
@@ -455,6 +497,15 @@ async function init() {
     const savedTimeFormat = localStorage.getItem('weatherTimeFormat');
     if (savedTimeFormat !== null) {
         state.use24HourFormat = savedTimeFormat === '24h';
+    }
+    
+    // Load saved map style
+    const savedMapStyle = localStorage.getItem('mapStyle');
+    if (savedMapStyle && mapTiles[savedMapStyle]) {
+        state.mapStyle = savedMapStyle;
+        if (elements.mapStyleSelect) {
+            elements.mapStyleSelect.value = savedMapStyle;
+        }
     }
     
     registerServiceWorker();
@@ -592,7 +643,6 @@ function updateUILanguage() {
     if (elements.titleRadar) elements.titleRadar.textContent = t('ui.precipRadar');
     
     // Update speed control
-    if (elements.speedLabel) elements.speedLabel.textContent = t('ui.speed');
     if (elements.speedSelect) {
         const options = elements.speedSelect.options;
         if (options.length >= 4) {
@@ -600,6 +650,17 @@ function updateUILanguage() {
             options[1].textContent = t('ui.speedNormal');
             options[2].textContent = t('ui.speedSlow');
             options[3].textContent = t('ui.speedVerySlow');
+        }
+    }
+    
+    // Update map style selector
+    if (elements.mapStyleSelect) {
+        const options = elements.mapStyleSelect.options;
+        if (options.length >= 4) {
+            options[0].textContent = t('ui.mapVoyager');
+            options[1].textContent = t('ui.mapLight');
+            options[2].textContent = t('ui.mapDark');
+            options[3].textContent = t('ui.mapSatellite');
         }
     }
     
@@ -934,6 +995,13 @@ function setupEventListeners() {
         elements.installPrompt.classList.add('hidden');
     });
     
+    // Map style selector
+    if (elements.mapStyleSelect) {
+        elements.mapStyleSelect.addEventListener('change', (e) => {
+            setMapStyle(e.target.value);
+        });
+    }
+    
     // Animation speed control
     if (elements.speedSelect) {
         // Load saved speed
@@ -985,11 +1053,8 @@ async function detectLocation() {
         
         const { latitude, longitude } = position.coords;
         
-        // Reverse geocode to get city name
-        const geocodeUrl = `https://geocoding-api.open-meteo.com/v1/search?latitude=${latitude}&longitude=${longitude}&count=1&format=json`;
-        
         try {
-            // Use reverse geocoding
+            // Use reverse geocoding to get city name
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
             const data = await response.json();
             
@@ -1498,12 +1563,8 @@ function initMap() {
         attributionControl: true
     });
     
-    // Add base tile layer (dark theme for better radar visibility)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 19
-    }).addTo(state.map);
+    // Add base tile layer based on saved style
+    setMapStyle(state.mapStyle);
     
     // Add location marker
     const locationIcon = L.divIcon({
@@ -1518,6 +1579,45 @@ function initMap() {
     
     // Load radar data
     loadRadarData();
+}
+
+// Set map tile style
+function setMapStyle(style) {
+    const tileConfig = mapTiles[style];
+    if (!tileConfig) return;
+    
+    // Remove existing base layer
+    if (state.baseLayer && state.map) {
+        state.map.removeLayer(state.baseLayer);
+    }
+    
+    // Create new tile layer
+    const options = {
+        attribution: tileConfig.attribution,
+        maxZoom: 19
+    };
+    
+    if (tileConfig.subdomains) {
+        options.subdomains = tileConfig.subdomains;
+    }
+    
+    state.baseLayer = L.tileLayer(tileConfig.url, options);
+    
+    // Add as bottom layer
+    if (state.map) {
+        state.baseLayer.addTo(state.map);
+        state.baseLayer.bringToBack();
+    }
+    
+    // Update map container background based on theme
+    const mapContainer = document.querySelector('.map-container');
+    if (mapContainer) {
+        mapContainer.style.background = tileConfig.isDark ? '#1a1a2e' : '#f0f0f0';
+    }
+    
+    // Save preference
+    state.mapStyle = style;
+    localStorage.setItem('mapStyle', style);
 }
 
 // Load radar data from RainViewer API

@@ -25,7 +25,7 @@
     <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -35,13 +35,13 @@
             <div class="header-content">
                 <h2 class="location-name" id="locationName">Laden...</h2>
                 <div class="header-buttons">
-                    <button class="icon-btn" id="locationBtn" aria-label="Update location">
+                    <button class="icon-btn" id="locationBtn" aria-label="Locatie bijwerken">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="3"></circle>
                             <path d="M12 2v4m0 12v4M2 12h4m12 0h4"></path>
                         </svg>
                     </button>
-                    <button class="icon-btn" id="settingsBtn" aria-label="Settings">
+                    <button class="icon-btn" id="settingsBtn" aria-label="Instellingen">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="3"></circle>
                             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -191,8 +191,13 @@
                     <div class="map-header">
                         <h3 class="section-title" id="titleRadar">Neerslag Radar</h3>
                         <div class="map-controls">
-                            <label class="speed-label" for="speedSelect" id="speedLabel">Snelheid:</label>
-                            <select id="speedSelect" class="speed-select">
+                            <select id="mapStyleSelect" class="map-style-select" aria-label="Kaartstijl">
+                                <option value="voyager">Voyager</option>
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="satellite">Satelliet</option>
+                            </select>
+                            <select id="speedSelect" class="speed-select" aria-label="Animatiesnelheid">
                                 <option value="250">Snel</option>
                                 <option value="500" selected>Normaal</option>
                                 <option value="750">Langzaam</option>
@@ -209,7 +214,7 @@
                     </div>
                     <div class="map-timeline">
                         <div class="timeline-controls">
-                            <button class="timeline-btn" id="playPauseBtn" aria-label="Play/Pause">
+                            <button class="timeline-btn" id="playPauseBtn" aria-label="Afspelen/Pauzeren">
                                 <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                     <polygon points="5,3 19,12 5,21"></polygon>
                                 </svg>
@@ -218,7 +223,7 @@
                                     <rect x="14" y="4" width="4" height="16"></rect>
                                 </svg>
                             </button>
-                            <input type="range" id="timelineSlider" class="timeline-slider" min="0" max="12" value="6" aria-label="Timeline slider">
+                            <input type="range" id="timelineSlider" class="timeline-slider" min="0" max="12" value="6" aria-label="Tijdlijn schuifregelaar">
                             <span class="timeline-time" id="timelineTime">Nu</span>
                         </div>
                     </div>
@@ -240,7 +245,7 @@
         <div class="modal-container">
             <div class="modal-header">
                 <h2 class="modal-title" id="settingsTitle">Instellingen</h2>
-                <button class="modal-close-btn" id="closeSettingsBtn" aria-label="Close">
+                <button class="modal-close-btn" id="closeSettingsBtn" aria-label="Sluiten">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -259,7 +264,7 @@
                                class="search-input" 
                                placeholder="Zoek stad..."
                                autocomplete="off">
-                        <button class="search-btn" id="searchBtn" aria-label="Search">
+                        <button class="search-btn" id="searchBtn" aria-label="Zoeken">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="11" cy="11" r="8"></circle>
                                 <path d="m21 21-4.35-4.35"></path>
