@@ -1824,99 +1824,52 @@ async function loadBuienradarData() {
     elements.mapOverlay.classList.remove('hidden');
     
     try {
-        // Buienradar provides animated radar images
-        // Their CDN gives us past 2 hours + 2 hour forecast
+        // Buienradar provides radar images via their API
+        // We'll use their image API which provides current + forecast
         const now = new Date();
-        const frames = [];
         
-        // Helper to format date as YYYYMMDDHHmm
-        const formatTimestamp = (date) => {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            return `${year}${month}${day}${hours}${minutes}`;
-        };
-        
-        // Generate frame timestamps: past 2 hours to future 2 hours
-        // Buienradar updates every 5 minutes
-        for (let i = -24; i <= 24; i++) { // -120min to +120min in 5min steps
-            const frameTime = new Date(now.getTime() + i * 5 * 60 * 1000);
-            // Round to nearest 5 minutes
-            frameTime.setMinutes(Math.floor(frameTime.getMinutes() / 5) * 5);
-            frameTime.setSeconds(0);
-            frameTime.setMilliseconds(0);
-            
-            frames.push({
-                time: Math.floor(frameTime.getTime() / 1000),
-                timestamp: formatTimestamp(frameTime),
-                isForecast: i > 0
-            });
-        }
-        
-        // Remove duplicates
-        const uniqueFrames = frames.filter((frame, index, self) => 
-            index === self.findIndex(f => f.time === frame.time)
-        );
-        
-        // Buienradar radar image bounds (Netherlands/Belgium region)
+        // Buienradar radar image bounds (Netherlands region - lat/lng)
         const bounds = radarSources.buienradar.bounds;
         
-        // Create layers for each frame
-        // Using Buienradar's CDN with timestamped radar images
-        uniqueFrames.forEach((frame) => {
-            // Buienradar radar image URL with timestamp format: YYYYMMDDHHmm
-            // Example: https://image-cdn.buienradar.nl/br-processing/image-api/RadarMapRainNL/Single/202601020005__256x238_True_False_True_0_0_0_0_c.png
-            const url = `https://image-cdn.buienradar.nl/br-processing/image-api/RadarMapRainNL/Single/${frame.timestamp}__${radarSources.buienradar.imageWidth}x${radarSources.buienradar.imageHeight}_True_False_True_0_0_0_0_c.png`;
-            
-            const layer = L.imageOverlay(url, bounds, {
-                opacity: 0,
-                zIndex: 5
-            });
-            
-            state.buienradarLayers.push({
-                layer: layer,
-                time: frame.time,
-                isForecast: frame.isForecast
-            });
+        // Clear existing layers
+        state.buienradarLayers = [];
+        
+        // Buienradar's main radar API - provides current radar view
+        // Adding cache-buster to prevent stale images
+        const cacheBuster = Math.floor(Date.now() / 60000); // Changes every minute
+        const url = `https://api.buienradar.nl/image/1.0/RadarMapNL?w=550&h=512&cb=${cacheBuster}`;
+        
+        // Create a single layer for the current radar
+        const layer = L.imageOverlay(url, bounds, {
+            opacity: 0.7,
+            zIndex: 5
         });
         
-        // Find the index closest to now
-        const nowTimestamp = Math.floor(Date.now() / 1000);
-        let nowIndex = 0;
-        let minDiff = Infinity;
-        
-        state.buienradarLayers.forEach((item, index) => {
-            const diff = Math.abs(item.time - nowTimestamp);
-            if (diff < minDiff) {
-                minDiff = diff;
-                nowIndex = index;
-            }
+        state.buienradarLayers.push({
+            layer: layer,
+            time: Math.floor(now.getTime() / 1000),
+            isForecast: false
         });
         
-        state.radarNowIndex = nowIndex;
-        state.radarLayers = state.buienradarLayers; // Use same reference for animation
+        state.radarNowIndex = 0;
+        state.radarLayers = state.buienradarLayers;
         
         // Update slider range
-        elements.timelineSlider.max = state.radarLayers.length - 1;
-        elements.timelineSlider.value = nowIndex;
-        state.currentRadarIndex = nowIndex;
+        elements.timelineSlider.max = 0;
+        elements.timelineSlider.value = 0;
+        state.currentRadarIndex = 0;
         
-        // Add all layers to map (hidden initially)
-        state.radarLayers.forEach(item => {
-            item.layer.addTo(state.map);
-        });
+        // Add layer to map
+        layer.addTo(state.map);
         
-        // Show current frame
-        updateRadarFrame();
+        // Update timeline display
+        elements.timelineTime.textContent = t('ui.timelineNow');
+        
+        // Hide play/pause for single frame
+        elements.playPauseBtn.style.display = 'none';
+        elements.timelineSlider.style.display = 'none';
         
         elements.mapOverlay.classList.add('hidden');
-        
-        // Autoplay radar animation
-        if (!state.isPlaying) {
-            startRadarAnimation();
-        }
         
     } catch (error) {
         console.error('Error loading Buienradar data:', error);
@@ -1927,6 +1880,10 @@ async function loadBuienradarData() {
 // Load radar data from RainViewer API
 async function loadRainviewerData() {
     elements.mapOverlay.classList.remove('hidden');
+    
+    // Restore playback controls (may have been hidden by Buienradar)
+    elements.playPauseBtn.style.display = '';
+    elements.timelineSlider.style.display = '';
     
     try {
         const response = await fetch('https://api.rainviewer.com/public/weather-maps.json');
