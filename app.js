@@ -1408,14 +1408,14 @@ async function handleSearchInput() {
     
     try {
         const response = await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=en&format=json`
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=en&format=json`
         );
         const data = await response.json();
         
         if (data.results && data.results.length > 0) {
             renderSuggestions(data.results);
         } else {
-            elements.searchSuggestions.innerHTML = '<div class="suggestion-item"><span class="suggestion-text">No cities found</span></div>';
+            elements.searchSuggestions.innerHTML = `<div class="suggestion-item"><span class="suggestion-text">${t('ui.noCitiesFound')}</span></div>`;
         }
     } catch (error) {
         console.error('Search error:', error);
@@ -1458,40 +1458,26 @@ function renderSuggestions(results) {
     });
 }
 
-// Handle search button click
+// Handle search button click - show suggestions instead of auto-selecting
 async function handleSearch() {
-    if (!elements.locationSearch) return;
+    if (!elements.locationSearch || !elements.searchSuggestions) return;
     const query = elements.locationSearch.value.trim();
     if (!query) return;
     
-    showLoading();
-    closeSettings();
-    
     try {
         const response = await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=en&format=json`
         );
         const data = await response.json();
         
         if (data.results && data.results.length > 0) {
-            const result = data.results[0];
-            state.currentLocation = {
-                name: result.name,
-                country: result.country || '',
-                latitude: result.latitude,
-                longitude: result.longitude
-            };
-            
-            localStorage.setItem('weatherLocation', JSON.stringify(state.currentLocation));
-            if (elements.searchSuggestions) elements.searchSuggestions.innerHTML = '';
-            if (elements.locationSearch) elements.locationSearch.value = '';
-            await fetchWeather();
+            renderSuggestions(data.results);
         } else {
-            showError('City not found. Please try a different search.');
+            elements.searchSuggestions.innerHTML = `<div class="suggestion-item"><span class="suggestion-text">${t('ui.noCitiesFound')}</span></div>`;
         }
     } catch (error) {
         console.error('Search error:', error);
-        showError('Search failed. Please check your connection and try again.');
+        elements.searchSuggestions.innerHTML = `<div class="suggestion-item"><span class="suggestion-text">${t('ui.searchError')}</span></div>`;
     }
 }
 
