@@ -1502,7 +1502,7 @@ async function detectLocation() {
         
         try {
             // Use BigDataCloud free reverse geocoding API (CORS-friendly)
-            const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+            const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=${state.language}`);
             const data = await response.json();
             
             state.currentLocation = {
@@ -1549,7 +1549,7 @@ async function handleSearchInput() {
     
     try {
         const response = await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=en&format=json`
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=${state.language}&format=json`
         );
         const data = await response.json();
         
@@ -1607,7 +1607,7 @@ async function handleSearch() {
     
     try {
         const response = await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=en&format=json`
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=${state.language}&format=json`
         );
         const data = await response.json();
         
