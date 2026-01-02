@@ -661,8 +661,10 @@ async function refreshLocationName(latitude, longitude) {
         const countryCode = data.countryCode || '';
         const countryName = countryShortNames[countryCode] || data.countryName || '';
         
+        // Prioritize locality (village/neighborhood) over city for more accurate names
+        // locality = specific place, city = administrative center (may be nearby larger town)
         state.currentLocation = {
-            name: data.city || data.locality || data.principalSubdivision || 'Your Location',
+            name: data.locality || data.city || data.principalSubdivision || 'Your Location',
             country: countryName,
             latitude,
             longitude
@@ -1570,8 +1572,10 @@ async function detectLocation() {
             const countryCode = data.countryCode || '';
             const countryName = countryShortNames[countryCode] || data.countryName || '';
             
+            // Prioritize locality (village/neighborhood) over city for more accurate names
+            // locality = specific place, city = administrative center (may be nearby larger town)
             state.currentLocation = {
-                name: data.city || data.locality || data.principalSubdivision || 'Your Location',
+                name: data.locality || data.city || data.principalSubdivision || 'Your Location',
                 country: countryName,
                 latitude,
                 longitude
