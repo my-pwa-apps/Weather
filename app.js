@@ -1351,13 +1351,13 @@ async function detectLocation() {
         const { latitude, longitude } = position.coords;
         
         try {
-            // Use reverse geocoding to get city name
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+            // Use BigDataCloud free reverse geocoding API (CORS-friendly)
+            const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
             const data = await response.json();
             
             state.currentLocation = {
-                name: data.address.city || data.address.town || data.address.village || data.address.municipality || 'Your Location',
-                country: data.address.country || '',
+                name: data.city || data.locality || data.principalSubdivision || 'Your Location',
+                country: data.countryName || '',
                 latitude,
                 longitude
             };
