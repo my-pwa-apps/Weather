@@ -1868,6 +1868,52 @@ body.rainy .map-control-btn:not(.active) {
     color: var(--text-secondary);
 }
 
+/* Light weather modes - tab navigation */
+body.sunny .tab-navigation,
+body.cloudy .tab-navigation,
+body.rainy .tab-navigation {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+body.sunny .tab-btn,
+body.cloudy .tab-btn,
+body.rainy .tab-btn {
+    color: rgba(0, 0, 0, 0.7);
+}
+
+body.sunny .tab-btn:hover,
+body.cloudy .tab-btn:hover,
+body.rainy .tab-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+body.sunny .tab-btn.active,
+body.cloudy .tab-btn.active,
+body.rainy .tab-btn.active {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+/* Light weather modes - location name */
+body.sunny .location-name,
+body.cloudy .location-name,
+body.rainy .location-name {
+    color: var(--text-primary);
+}
+
+body.sunny .location-time,
+body.cloudy .location-time,
+body.rainy .location-time {
+    color: var(--text-secondary);
+}
+
+/* Light weather modes - icon buttons */
+body.sunny .icon-btn,
+body.cloudy .icon-btn,
+body.rainy .icon-btn {
+    color: var(--text-primary);
+}
+
 /* Focus styles for accessibility */
 button:focus-visible,
 input:focus-visible,
@@ -1879,6 +1925,24 @@ select:focus-visible {
 /* Smooth scrolling */
 html {
     scroll-behavior: smooth;
+}
+
+/* Force portrait orientation on mobile */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    body::before {
+        content: '📱 Draai je telefoon voor de beste ervaring';
+        position: fixed;
+        inset: 0;
+        background: var(--primary-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: white;
+        text-align: center;
+        padding: 2rem;
+        z-index: 10000;
+    }
 }
 
 /* Print styles */
