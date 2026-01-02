@@ -210,15 +210,19 @@ body {
 
 .favorites-search-section .search-container.compact {
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .favorites-search-section .search-input {
+    flex: 1;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-md);
     color: white;
     font-size: 0.9rem;
     padding: 10px 12px;
-    padding-right: 40px;
 }
 
 .favorites-search-section .search-input::placeholder {
@@ -231,8 +235,15 @@ body {
 }
 
 .favorites-search-section .search-btn {
+    flex-shrink: 0;
     background: transparent;
+    border: none;
+    padding: 8px;
     color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .favorites-search-section .search-btn:hover {

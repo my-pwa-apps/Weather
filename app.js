@@ -702,33 +702,36 @@ function updateAddFavoriteButton() {
     const btn = elements.addFavoriteBtn;
     const text = document.getElementById('addFavoriteText');
     
+    // Hide button if already a favorite (remove only via X button)
     if (isFavorite) {
-        btn.classList.add('is-favorite');
-        text.textContent = t('ui.removeFromFavorites');
+        btn.style.display = 'none';
     } else {
+        btn.style.display = 'flex';
         btn.classList.remove('is-favorite');
         text.textContent = t('ui.addToFavorites');
     }
 }
 
-function toggleCurrentLocationFavorite() {
+function addCurrentLocationToFavorites() {
     if (!state.currentLocation) return;
     
+    // Check if already a favorite - if so, do nothing
     const existingIndex = state.favorites.findIndex(fav => 
         fav.latitude === state.currentLocation.latitude && 
         fav.longitude === state.currentLocation.longitude
     );
     
     if (existingIndex >= 0) {
-        state.favorites.splice(existingIndex, 1);
-    } else {
-        state.favorites.push({
-            name: state.currentLocation.name,
-            country: state.currentLocation.country,
-            latitude: state.currentLocation.latitude,
-            longitude: state.currentLocation.longitude
-        });
+        // Already a favorite, don't add again
+        return;
     }
+    
+    state.favorites.push({
+        name: state.currentLocation.name,
+        country: state.currentLocation.country,
+        latitude: state.currentLocation.latitude,
+        longitude: state.currentLocation.longitude
+    });
     
     saveFavorites();
     renderFavoritesList();
@@ -991,13 +994,8 @@ function showUpdateToast() {
 const tabOrder = ['current', 'hourly', 'daily', 'radar'];
 
 function setupTabs() {
-    // Load saved tab preference or use default
-    if (config.rememberTab) {
-        const savedTab = localStorage.getItem('weatherActiveTab');
-        if (savedTab && tabOrder.includes(savedTab)) {
-            state.activeTab = savedTab;
-        }
-    }
+    // Always start on 'current' (Now) tab
+    state.activeTab = 'current';
     
     // Add click handlers to tab buttons
     elements.tabBtns.forEach(btn => {
@@ -1170,7 +1168,7 @@ function setupEventListeners() {
     if (elements.addFavoriteBtn) {
         elements.addFavoriteBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            toggleCurrentLocationFavorite();
+            addCurrentLocationToFavorites();
         });
     }
     
