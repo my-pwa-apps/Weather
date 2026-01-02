@@ -106,7 +106,11 @@ const translations = {
             themeLight: 'Licht',
             themeDark: 'Donker',
             back: 'Terug',
-            highLow: 'Hoog / Laag'
+            highLow: 'Hoog / Laag',
+            favorites: 'Favorieten',
+            addToFavorites: 'Toevoegen aan favorieten',
+            removeFromFavorites: 'Verwijderen',
+            noFavorites: 'Geen favorieten opgeslagen'
         },
         // Wind directions
         windDir: {
@@ -238,7 +242,11 @@ const translations = {
             themeLight: 'Light',
             themeDark: 'Dark',
             back: 'Back',
-            highLow: 'High / Low'
+            highLow: 'High / Low',
+            favorites: 'Favorites',
+            addToFavorites: 'Add to favorites',
+            removeFromFavorites: 'Remove',
+            noFavorites: 'No favorites saved'
         },
         // Wind directions
         windDir: {
@@ -275,14 +283,29 @@ const translations = {
     }
 };
 
-// Weather code to icon mapping
-const weatherIcons = {
+// Weather code to icon mapping (day)
+const weatherIconsDay = {
     0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️',
     51: '🌧️', 53: '🌧️', 55: '🌧️', 56: '🌧️', 57: '🌧️',
     61: '🌧️', 63: '🌧️', 65: '🌧️', 66: '🌨️', 67: '🌨️',
     71: '❄️', 73: '❄️', 75: '❄️', 77: '🌨️', 80: '🌦️', 81: '🌦️', 82: '🌧️',
     85: '🌨️', 86: '🌨️', 95: '⛈️', 96: '⛈️', 99: '⛈️'
 };
+
+// Weather code to icon mapping (night)
+const weatherIconsNight = {
+    0: '🌙', 1: '🌙', 2: '☁️', 3: '☁️', 45: '🌫️', 48: '🌫️',
+    51: '🌧️', 53: '🌧️', 55: '🌧️', 56: '🌧️', 57: '🌧️',
+    61: '🌧️', 63: '🌧️', 65: '🌧️', 66: '🌨️', 67: '🌨️',
+    71: '❄️', 73: '❄️', 75: '❄️', 77: '🌨️', 80: '🌧️', 81: '🌧️', 82: '🌧️',
+    85: '🌨️', 86: '🌨️', 95: '⛈️', 96: '⛈️', 99: '⛈️'
+};
+
+// Function to get weather icon based on day/night
+function getWeatherIcon(code, isDay = true) {
+    const icons = isDay ? weatherIconsDay : weatherIconsNight;
+    return icons[code] || '🌡️';
+}
 
 // Beaufort scale thresholds (km/h)
 const beaufortThresholds = [1, 6, 12, 20, 29, 39, 50, 62, 75, 89, 103, 118];
@@ -362,6 +385,7 @@ const config = {
 // App State
 const state = {
     currentLocation: null,
+    favorites: [],
     weatherData: null,
     isLoading: false,
     deferredPrompt: null,
@@ -388,6 +412,10 @@ const state = {
 // DOM Elements
 const elements = {
     locationBtn: document.getElementById('locationBtn'),
+    locationName: document.getElementById('locationName'),
+    favoritesDropdown: document.getElementById('favoritesDropdown'),
+    favoritesList: document.getElementById('favoritesList'),
+    addFavoriteBtn: document.getElementById('addFavoriteBtn'),
     locationSearch: document.getElementById('locationSearch'),
     searchBtn: document.getElementById('searchBtn'),
     searchSuggestions: document.getElementById('searchSuggestions'),
@@ -451,8 +479,6 @@ const elements = {
     closeSettingsBtn: document.getElementById('closeSettingsBtn'),
     useMyLocationBtn: document.getElementById('useMyLocationBtn'),
     settingsTitle: document.getElementById('settingsTitle'),
-    settingsLocationTitle: document.getElementById('settingsLocationTitle'),
-    settingsLocationDesc: document.getElementById('settingsLocationDesc'),
     useMyLocationText: document.getElementById('useMyLocationText'),
     // Time format settings
     settingsTimeFormatTitle: document.getElementById('settingsTimeFormatTitle'),
@@ -536,6 +562,7 @@ async function init() {
     registerServiceWorker();
     setupEventListeners();
     setupTabs();
+    loadFavorites();
     updateDateTime();
     updateUILanguage();
     updateTimeFormatButtons();
@@ -575,6 +602,154 @@ function closeSettings() {
     if (elements.locationSearch) {
         elements.locationSearch.value = '';
     }
+}
+
+// ========================================
+// FAVORITES FUNCTIONS
+// ========================================
+function loadFavorites() {
+    const saved = localStorage.getItem('weatherFavorites');
+    if (saved) {
+        state.favorites = JSON.parse(saved);
+    }
+}
+
+function saveFavorites() {
+    localStorage.setItem('weatherFavorites', JSON.stringify(state.favorites));
+}
+
+function toggleFavoritesDropdown() {
+    const dropdown = elements.favoritesDropdown;
+    const wrapper = elements.locationName.parentElement;
+    
+    if (dropdown.classList.contains('hidden')) {
+        dropdown.classList.remove('hidden');
+        wrapper.classList.add('open');
+        renderFavoritesList();
+        updateAddFavoriteButton();
+    } else {
+        dropdown.classList.add('hidden');
+        wrapper.classList.remove('open');
+    }
+}
+
+function closeFavoritesDropdown() {
+    elements.favoritesDropdown.classList.add('hidden');
+    elements.locationName.parentElement.classList.remove('open');
+}
+
+function renderFavoritesList() {
+    const list = elements.favoritesList;
+    
+    if (state.favorites.length === 0) {
+        list.innerHTML = `<div class="favorites-empty">${t('ui.noFavorites')}</div>`;
+        return;
+    }
+    
+    list.innerHTML = state.favorites.map((fav, index) => {
+        const isActive = state.currentLocation && 
+            state.currentLocation.latitude === fav.latitude && 
+            state.currentLocation.longitude === fav.longitude;
+        
+        return `
+            <div class="favorite-item ${isActive ? 'active' : ''}" data-index="${index}">
+                <div class="favorite-info">
+                    <span class="favorite-name">${fav.name}</span>
+                    <span class="favorite-country">${fav.country || ''}</span>
+                </div>
+                <button class="favorite-remove" data-index="${index}" aria-label="${t('ui.removeFromFavorites')}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        `;
+    }).join('');
+    
+    // Add click handlers
+    list.querySelectorAll('.favorite-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            if (e.target.closest('.favorite-remove')) return;
+            const index = parseInt(item.dataset.index);
+            selectFavorite(index);
+        });
+    });
+    
+    list.querySelectorAll('.favorite-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const index = parseInt(btn.dataset.index);
+            removeFavorite(index);
+        });
+    });
+}
+
+function updateAddFavoriteButton() {
+    if (!state.currentLocation) return;
+    
+    const isFavorite = state.favorites.some(fav => 
+        fav.latitude === state.currentLocation.latitude && 
+        fav.longitude === state.currentLocation.longitude
+    );
+    
+    const btn = elements.addFavoriteBtn;
+    const text = document.getElementById('addFavoriteText');
+    
+    if (isFavorite) {
+        btn.classList.add('is-favorite');
+        text.textContent = t('ui.removeFromFavorites');
+    } else {
+        btn.classList.remove('is-favorite');
+        text.textContent = t('ui.addToFavorites');
+    }
+}
+
+function toggleCurrentLocationFavorite() {
+    if (!state.currentLocation) return;
+    
+    const existingIndex = state.favorites.findIndex(fav => 
+        fav.latitude === state.currentLocation.latitude && 
+        fav.longitude === state.currentLocation.longitude
+    );
+    
+    if (existingIndex >= 0) {
+        state.favorites.splice(existingIndex, 1);
+    } else {
+        state.favorites.push({
+            name: state.currentLocation.name,
+            country: state.currentLocation.country,
+            latitude: state.currentLocation.latitude,
+            longitude: state.currentLocation.longitude
+        });
+    }
+    
+    saveFavorites();
+    renderFavoritesList();
+    updateAddFavoriteButton();
+}
+
+function selectFavorite(index) {
+    const fav = state.favorites[index];
+    if (!fav) return;
+    
+    state.currentLocation = {
+        name: fav.name,
+        country: fav.country,
+        latitude: fav.latitude,
+        longitude: fav.longitude
+    };
+    
+    localStorage.setItem('weatherLocation', JSON.stringify(state.currentLocation));
+    closeFavoritesDropdown();
+    fetchWeather();
+}
+
+function removeFavorite(index) {
+    state.favorites.splice(index, 1);
+    saveFavorites();
+    renderFavoritesList();
+    updateAddFavoriteButton();
 }
 
 // Time format functions
@@ -720,8 +895,6 @@ function updateUILanguage() {
     
     // Update settings modal
     if (elements.settingsTitle) elements.settingsTitle.textContent = t('ui.settings');
-    if (elements.settingsLocationTitle) elements.settingsLocationTitle.textContent = t('ui.settingsLocation');
-    if (elements.settingsLocationDesc) elements.settingsLocationDesc.textContent = t('ui.settingsLocationDesc');
     if (elements.useMyLocationText) elements.useMyLocationText.textContent = t('ui.useMyLocation');
     
     // Update time format settings
@@ -737,6 +910,12 @@ function updateUILanguage() {
     if (elements.themeAutoText) elements.themeAutoText.textContent = t('ui.themeAuto');
     if (elements.themeLightText) elements.themeLightText.textContent = t('ui.themeLight');
     if (elements.themeDarkText) elements.themeDarkText.textContent = t('ui.themeDark');
+    
+    // Update favorites dropdown
+    const favoritesTitle = document.getElementById('favoritesTitle');
+    const addFavoriteText = document.getElementById('addFavoriteText');
+    if (favoritesTitle) favoritesTitle.textContent = t('ui.favorites');
+    if (addFavoriteText) addFavoriteText.textContent = t('ui.addToFavorites');
 }
 
 // Register Service Worker
@@ -923,6 +1102,32 @@ function setupEventListeners() {
     // Location button - also detects location
     elements.locationBtn.addEventListener('click', detectLocation);
     
+    // Location name click - toggle favorites
+    if (elements.locationName) {
+        elements.locationName.parentElement.addEventListener('click', (e) => {
+            if (!e.target.closest('.favorites-dropdown')) {
+                toggleFavoritesDropdown();
+            }
+        });
+    }
+    
+    // Add to favorites button
+    if (elements.addFavoriteBtn) {
+        elements.addFavoriteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleCurrentLocationFavorite();
+        });
+    }
+    
+    // Close favorites dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (elements.favoritesDropdown && !elements.favoritesDropdown.classList.contains('hidden')) {
+            if (!e.target.closest('.location-wrapper')) {
+                closeFavoritesDropdown();
+            }
+        }
+    });
+    
     // Settings modal
     if (elements.settingsBtn) {
         elements.settingsBtn.addEventListener('click', openSettings);
@@ -939,7 +1144,7 @@ function setupEventListeners() {
     }
     if (elements.useMyLocationBtn) {
         elements.useMyLocationBtn.addEventListener('click', async () => {
-            closeSettings();
+            closeFavoritesDropdown();
             await detectLocation();
         });
     }
@@ -1194,7 +1399,7 @@ function renderSuggestions(results) {
             localStorage.setItem('weatherLocation', JSON.stringify(state.currentLocation));
             elements.searchSuggestions.innerHTML = '';
             elements.locationSearch.value = '';
-            closeSettings();
+            closeFavoritesDropdown();
             fetchWeather();
         });
     });
@@ -1260,7 +1465,7 @@ async function fetchWeather() {
     }
     
     try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation&hourly=temperature_2m,weather_code,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant,relative_humidity_2m_mean&timezone=auto`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day&hourly=temperature_2m,weather_code,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,precipitation,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant,relative_humidity_2m_mean&timezone=auto`;
         
         const response = await fetch(url);
         
@@ -1283,7 +1488,8 @@ async function fetchWeather() {
 // Render weather data
 function renderWeather(data) {
     const current = data.current;
-    const weatherIcon = weatherIcons[current.weather_code] || '🌡️';
+    const isDay = current.is_day === 1;
+    const weatherIcon = getWeatherIcon(current.weather_code, isDay);
     const weatherDesc = getWeatherDescription(current.weather_code);
     const windKmh = Math.round(current.wind_speed_10m);
     const beaufort = getBeaufort(windKmh);
@@ -1335,15 +1541,17 @@ function renderHourlyForecast(hourly) {
     const hours = hourly.time.slice(startIndex, startIndex + 24);
     const temps = hourly.temperature_2m.slice(startIndex, startIndex + 24);
     const codes = hourly.weather_code.slice(startIndex, startIndex + 24);
+    const isDayArray = hourly.is_day ? hourly.is_day.slice(startIndex, startIndex + 24) : [];
     
     // Store hourly data for detail view
-    state.hourlyData = { hours, temps, codes, startIndex };
+    state.hourlyData = { hours, temps, codes, isDayArray, startIndex };
     
     elements.hourlyForecast.innerHTML = hours.map((time, index) => {
         const date = new Date(time);
         const hour = date.getHours();
         const isNow = index === 0;
-        const icon = weatherIcons[codes[index]] || '🌡️';
+        const isDay = isDayArray[index] === 1;
+        const icon = getWeatherIcon(codes[index], isDay);
         const isSelected = state.selectedHourIndex === index;
         
         return `
@@ -1375,7 +1583,7 @@ function selectHourlyItem(index) {
     
     // Show details in the overlay
     if (state.hourlyData && state.weatherData) {
-        const { hours, startIndex } = state.hourlyData;
+        const { hours, startIndex, isDayArray } = state.hourlyData;
         const hourly = state.weatherData.hourly;
         const dataIndex = startIndex + index;
         
@@ -1388,7 +1596,8 @@ function selectHourlyItem(index) {
         const windDir = hourly.wind_direction_10m[dataIndex];
         const precip = hourly.precipitation[dataIndex];
         
-        const icon = weatherIcons[weatherCode] || '🌡️';
+        const isDay = isDayArray[index] === 1;
+        const icon = getWeatherIcon(weatherCode, isDay);
         const desc = getWeatherDescription(weatherCode);
         const beaufort = getBeaufort(Math.round(windSpeed));
         const windDirText = getWindDirection(windDir);

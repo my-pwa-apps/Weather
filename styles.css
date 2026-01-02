@@ -148,6 +148,236 @@ body {
 }
 
 /* ========================================
+   LOCATION & FAVORITES
+   ======================================== */
+.location-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin: -4px -8px;
+    border-radius: var(--radius-sm);
+    transition: background var(--duration-fast) var(--ease-fluent);
+}
+
+.location-wrapper:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.location-chevron {
+    color: rgba(255, 255, 255, 0.7);
+    transition: transform var(--duration-fast) var(--ease-fluent);
+}
+
+.location-wrapper.open .location-chevron {
+    transform: rotate(180deg);
+}
+
+.favorites-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: -8px;
+    min-width: 280px;
+    max-width: 320px;
+    background: rgba(30, 30, 50, 0.95);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    overflow: hidden;
+    animation: dropdownFadeIn var(--duration-normal) var(--ease-fluent);
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.favorites-search-section {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.favorites-search-section .search-container.compact {
+    margin: 0;
+}
+
+.favorites-search-section .search-input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    font-size: 0.9rem;
+    padding: 10px 12px;
+    padding-right: 40px;
+}
+
+.favorites-search-section .search-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.favorites-search-section .search-input:focus {
+    border-color: rgba(102, 126, 234, 0.5);
+    outline: none;
+}
+
+.favorites-search-section .search-btn {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.favorites-search-section .search-btn:hover {
+    color: white;
+}
+
+.favorites-search-section .search-suggestions {
+    margin-top: 8px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.favorites-search-section .suggestion-item {
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    color: white;
+}
+
+.favorites-search-section .suggestion-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.use-location-btn.compact {
+    margin: 0;
+    padding: 12px 16px;
+    border-radius: 0;
+    border-bottom: none;
+    font-size: 0.85rem;
+}
+
+.favorites-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0;
+}
+
+.favorites-header {
+    padding: 12px 16px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.favorites-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.favorites-empty {
+    padding: 20px 16px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+}
+
+.favorite-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-fluent);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.favorite-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.favorite-item.active {
+    background: rgba(102, 126, 234, 0.2);
+}
+
+.favorite-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.favorite-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.favorite-country {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.favorite-remove {
+    background: transparent;
+    border: none;
+    padding: 6px;
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all var(--duration-fast) var(--ease-fluent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.favorite-remove:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.add-favorite-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px 16px;
+    background: transparent;
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-fluent);
+}
+
+.add-favorite-btn:hover {
+    background: rgba(102, 126, 234, 0.2);
+}
+
+.add-favorite-btn.is-favorite {
+    color: #fbbf24;
+}
+
+.add-favorite-btn.is-favorite svg {
+    fill: #fbbf24;
+}
+
+/* ========================================
    LOADING STATE
    ======================================== */
 .loading-state {
