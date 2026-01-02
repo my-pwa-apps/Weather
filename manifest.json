@@ -2,7 +2,7 @@
     "name": "Weer",
     "short_name": "Weer",
     "description": "Je persoonlijke weer assistent - mooie weersvoorspellingen voor jouw locatie",
-    "start_url": "/",
+    "start_url": "./",
     "id": "weather-pwa",
     "display": "standalone",
     "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],

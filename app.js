@@ -101,8 +101,17 @@ const translations = {
             timeFormat24h: '24-uurs',
             timeFormat12h: '12-uurs',
             settingsLanguage: 'Taal',
+            settingsAppearance: 'Weergave',
+            themeAuto: 'Auto',
+            themeLight: 'Licht',
+            themeDark: 'Donker',
             back: 'Terug',
-            highLow: 'Hoog / Laag'
+            highLow: 'Hoog / Laag',
+            radarSource: 'Radarbron',
+            radarRainviewer: 'RainViewer',
+            radarBuienradar: 'Buienradar',
+            radarCoverageWorld: 'Wereldwijd',
+            radarCoverageNLBE: 'NL/BE'
         },
         // Wind directions
         windDir: {
@@ -229,8 +238,17 @@ const translations = {
             timeFormat24h: '24-hour',
             timeFormat12h: '12-hour',
             settingsLanguage: 'Language',
+            settingsAppearance: 'Appearance',
+            themeAuto: 'Auto',
+            themeLight: 'Light',
+            themeDark: 'Dark',
             back: 'Back',
-            highLow: 'High / Low'
+            highLow: 'High / Low',
+            radarSource: 'Radar source',
+            radarRainviewer: 'RainViewer',
+            radarBuienradar: 'Buienradar',
+            radarCoverageWorld: 'Worldwide',
+            radarCoverageNLBE: 'NL/BE'
         },
         // Wind directions
         windDir: {
@@ -336,6 +354,30 @@ const mapTiles = {
 };
 
 // ========================================
+// RADAR SOURCE CONFIGURATIONS
+// ========================================
+const radarSources = {
+    rainviewer: {
+        name: 'RainViewer',
+        coverage: 'Wereldwijd',
+        coverageEn: 'Worldwide',
+        maxForecast: 30 // minutes
+    },
+    buienradar: {
+        name: 'Buienradar',
+        coverage: 'Nederland/België',
+        coverageEn: 'Netherlands/Belgium',
+        maxForecast: 120, // minutes
+        // Buienradar image bounds (Netherlands region - lat/lng)
+        // Bottom-left: 48.895, 0.0 | Top-right: 55.973, 10.856
+        bounds: [[48.895, 0.0], [55.973, 10.856]],
+        // Image dimensions for proper aspect ratio
+        imageWidth: 550,
+        imageHeight: 512
+    }
+};
+
+// ========================================
 // CONFIGURATION
 // ========================================
 const config = {
@@ -358,6 +400,7 @@ const state = {
     deferredPrompt: null,
     map: null,
     radarLayers: [],
+    buienradarLayers: [],
     currentRadarIndex: 0,
     radarData: null,
     isPlaying: false,
@@ -366,8 +409,10 @@ const state = {
     activeTab: config.defaultTab,
     mapInitialized: false,
     mapStyle: 'satellite',
+    radarSource: 'buienradar',
     baseLayer: null,
     language: config.defaultLanguage,
+    theme: 'dark',
     use24HourFormat: true,
     selectedHourIndex: null,
     selectedDayIndex: null,
@@ -419,6 +464,7 @@ const elements = {
     precipMap: document.getElementById('precipMap'),
     mapOverlay: document.getElementById('mapOverlay'),
     loadingRadar: document.getElementById('loadingRadar'),
+    radarSourceSelect: document.getElementById('radarSourceSelect'),
     mapStyleSelect: document.getElementById('mapStyleSelect'),
     speedSelect: document.getElementById('speedSelect'),
     playPauseBtn: document.getElementById('playPauseBtn'),
@@ -453,6 +499,14 @@ const elements = {
     settingsLanguageTitle: document.getElementById('settingsLanguageTitle'),
     langNlBtn: document.getElementById('langNlBtn'),
     langEnBtn: document.getElementById('langEnBtn'),
+    // Appearance settings
+    settingsAppearanceTitle: document.getElementById('settingsAppearanceTitle'),
+    themeAutoBtn: document.getElementById('themeAutoBtn'),
+    themeLightBtn: document.getElementById('themeLightBtn'),
+    themeDarkBtn: document.getElementById('themeDarkBtn'),
+    themeAutoText: document.getElementById('themeAutoText'),
+    themeLightText: document.getElementById('themeLightText'),
+    themeDarkText: document.getElementById('themeDarkText'),
     // Hourly detail overlay
     hourlyDetailOverlay: document.getElementById('hourlyDetailOverlay'),
     hourlyBackBtn: document.getElementById('hourlyBackBtn'),
@@ -499,6 +553,12 @@ async function init() {
         state.use24HourFormat = savedTimeFormat === '24h';
     }
     
+    // Load saved theme
+    const savedTheme = localStorage.getItem('weatherTheme');
+    if (savedTheme && ['auto', 'light', 'dark'].includes(savedTheme)) {
+        state.theme = savedTheme;
+    }
+    
     // Load saved map style
     const savedMapStyle = localStorage.getItem('mapStyle');
     if (savedMapStyle && mapTiles[savedMapStyle]) {
@@ -515,7 +575,13 @@ async function init() {
     updateUILanguage();
     updateTimeFormatButtons();
     updateLanguageButtons();
+    updateThemeButtons();
     setInterval(updateDateTime, 60000);
+    
+    // Apply initial theme
+    if (state.theme === 'dark') {
+        document.body.classList.add('night-mode');
+    }
     
     // Try to load saved location or auto-detect current location
     const savedLocation = localStorage.getItem('weatherLocation');
@@ -700,6 +766,12 @@ function updateUILanguage() {
     
     // Update language settings
     if (elements.settingsLanguageTitle) elements.settingsLanguageTitle.textContent = t('ui.settingsLanguage');
+    
+    // Update appearance settings
+    if (elements.settingsAppearanceTitle) elements.settingsAppearanceTitle.textContent = t('ui.settingsAppearance');
+    if (elements.themeAutoText) elements.themeAutoText.textContent = t('ui.themeAuto');
+    if (elements.themeLightText) elements.themeLightText.textContent = t('ui.themeLight');
+    if (elements.themeDarkText) elements.themeDarkText.textContent = t('ui.themeDark');
 }
 
 // Register Service Worker
@@ -930,6 +1002,17 @@ function setupEventListeners() {
         elements.langEnBtn.addEventListener('click', () => switchLanguage('en'));
     }
     
+    // Theme toggle buttons in settings
+    if (elements.themeAutoBtn) {
+        elements.themeAutoBtn.addEventListener('click', () => setTheme('auto'));
+    }
+    if (elements.themeLightBtn) {
+        elements.themeLightBtn.addEventListener('click', () => setTheme('light'));
+    }
+    if (elements.themeDarkBtn) {
+        elements.themeDarkBtn.addEventListener('click', () => setTheme('dark'));
+    }
+    
     // Search functionality
     if (elements.searchBtn) {
         elements.searchBtn.addEventListener('click', handleSearch);
@@ -994,6 +1077,20 @@ function setupEventListeners() {
     elements.dismissBtn.addEventListener('click', () => {
         elements.installPrompt.classList.add('hidden');
     });
+    
+    // Radar source selector
+    if (elements.radarSourceSelect) {
+        // Load saved radar source
+        const savedSource = localStorage.getItem('radarSource');
+        if (savedSource) {
+            state.radarSource = savedSource;
+            elements.radarSourceSelect.value = savedSource;
+        }
+        
+        elements.radarSourceSelect.addEventListener('change', (e) => {
+            setRadarSource(e.target.value);
+        });
+    }
     
     // Map style selector
     if (elements.mapStyleSelect) {
@@ -1485,10 +1582,29 @@ function formatHour(hour) {
     return hour > 12 ? `${hour - 12} PM` : `${hour} AM`;
 }
 
-// Update background based on weather
+// Update background based on weather and theme
 function updateBackground(weatherCode, temperature) {
     document.body.classList.remove('sunny', 'cloudy', 'rainy', 'night-mode');
     
+    // Check theme setting
+    if (state.theme === 'dark') {
+        document.body.classList.add('night-mode');
+        return;
+    }
+    
+    if (state.theme === 'light') {
+        // Apply weather-based backgrounds in light mode
+        if (weatherCode === 0 || weatherCode === 1) {
+            document.body.classList.add('sunny');
+        } else if ([45, 48, 2, 3].includes(weatherCode)) {
+            document.body.classList.add('cloudy');
+        } else if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99].includes(weatherCode)) {
+            document.body.classList.add('rainy');
+        }
+        return;
+    }
+    
+    // Auto mode: time-based
     const now = new Date();
     const hour = now.getHours();
     
@@ -1505,6 +1621,37 @@ function updateBackground(weatherCode, temperature) {
         document.body.classList.add('cloudy');
     } else if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99].includes(weatherCode)) {
         document.body.classList.add('rainy');
+    }
+}
+
+// Set theme
+function setTheme(theme) {
+    state.theme = theme;
+    localStorage.setItem('weatherTheme', theme);
+    updateThemeButtons();
+    
+    // Re-apply background with current weather
+    if (state.weatherData) {
+        updateBackground(state.weatherData.current.weather_code, state.weatherData.current.temperature_2m);
+    } else {
+        // No weather data yet, just apply theme
+        document.body.classList.remove('sunny', 'cloudy', 'rainy', 'night-mode');
+        if (theme === 'dark') {
+            document.body.classList.add('night-mode');
+        }
+    }
+}
+
+// Update theme buttons
+function updateThemeButtons() {
+    if (elements.themeAutoBtn) {
+        elements.themeAutoBtn.classList.toggle('active', state.theme === 'auto');
+    }
+    if (elements.themeLightBtn) {
+        elements.themeLightBtn.classList.toggle('active', state.theme === 'light');
+    }
+    if (elements.themeDarkBtn) {
+        elements.themeDarkBtn.classList.toggle('active', state.theme === 'dark');
     }
 }
 
@@ -1620,8 +1767,165 @@ function setMapStyle(style) {
     localStorage.setItem('mapStyle', style);
 }
 
-// Load radar data from RainViewer API
+// Set radar source
+function setRadarSource(source) {
+    if (!radarSources[source]) return;
+    
+    // Stop any running animation
+    stopRadarAnimation();
+    
+    // Clear existing radar layers
+    clearRadarLayers();
+    
+    // Update state
+    state.radarSource = source;
+    localStorage.setItem('radarSource', source);
+    
+    // If switching to Buienradar, auto-fit to Netherlands region
+    if (source === 'buienradar' && state.map) {
+        const bounds = radarSources.buienradar.bounds;
+        state.map.fitBounds(bounds, { padding: [20, 20] });
+    }
+    
+    // Reload radar data with new source
+    loadRadarData();
+}
+
+// Clear all radar layers from the map
+function clearRadarLayers() {
+    // Clear RainViewer layers
+    state.radarLayers.forEach(item => {
+        if (state.map && state.map.hasLayer(item.layer)) {
+            state.map.removeLayer(item.layer);
+        }
+    });
+    state.radarLayers = [];
+    
+    // Clear Buienradar layers
+    state.buienradarLayers.forEach(item => {
+        if (state.map && state.map.hasLayer(item.layer)) {
+            state.map.removeLayer(item.layer);
+        }
+    });
+    state.buienradarLayers = [];
+}
+
+// Load radar data based on current source
 async function loadRadarData() {
+    if (state.radarSource === 'buienradar') {
+        await loadBuienradarData();
+    } else {
+        await loadRainviewerData();
+    }
+}
+
+// Load radar data from Buienradar API
+async function loadBuienradarData() {
+    elements.mapOverlay.classList.remove('hidden');
+    
+    try {
+        // Buienradar provides animated radar images
+        // Their CDN gives us past 2 hours + 2 hour forecast
+        const now = new Date();
+        const frames = [];
+        
+        // Helper to format date as YYYYMMDDHHmm
+        const formatTimestamp = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${year}${month}${day}${hours}${minutes}`;
+        };
+        
+        // Generate frame timestamps: past 2 hours to future 2 hours
+        // Buienradar updates every 5 minutes
+        for (let i = -24; i <= 24; i++) { // -120min to +120min in 5min steps
+            const frameTime = new Date(now.getTime() + i * 5 * 60 * 1000);
+            // Round to nearest 5 minutes
+            frameTime.setMinutes(Math.floor(frameTime.getMinutes() / 5) * 5);
+            frameTime.setSeconds(0);
+            frameTime.setMilliseconds(0);
+            
+            frames.push({
+                time: Math.floor(frameTime.getTime() / 1000),
+                timestamp: formatTimestamp(frameTime),
+                isForecast: i > 0
+            });
+        }
+        
+        // Remove duplicates
+        const uniqueFrames = frames.filter((frame, index, self) => 
+            index === self.findIndex(f => f.time === frame.time)
+        );
+        
+        // Buienradar radar image bounds (Netherlands/Belgium region)
+        const bounds = radarSources.buienradar.bounds;
+        
+        // Create layers for each frame
+        // Using Buienradar's CDN with timestamped radar images
+        uniqueFrames.forEach((frame) => {
+            // Buienradar radar image URL with timestamp format: YYYYMMDDHHmm
+            // Example: https://image-cdn.buienradar.nl/br-processing/image-api/RadarMapRainNL/Single/202601020005__256x238_True_False_True_0_0_0_0_c.png
+            const url = `https://image-cdn.buienradar.nl/br-processing/image-api/RadarMapRainNL/Single/${frame.timestamp}__${radarSources.buienradar.imageWidth}x${radarSources.buienradar.imageHeight}_True_False_True_0_0_0_0_c.png`;
+            
+            const layer = L.imageOverlay(url, bounds, {
+                opacity: 0,
+                zIndex: 5
+            });
+            
+            state.buienradarLayers.push({
+                layer: layer,
+                time: frame.time,
+                isForecast: frame.isForecast
+            });
+        });
+        
+        // Find the index closest to now
+        const nowTimestamp = Math.floor(Date.now() / 1000);
+        let nowIndex = 0;
+        let minDiff = Infinity;
+        
+        state.buienradarLayers.forEach((item, index) => {
+            const diff = Math.abs(item.time - nowTimestamp);
+            if (diff < minDiff) {
+                minDiff = diff;
+                nowIndex = index;
+            }
+        });
+        
+        state.radarNowIndex = nowIndex;
+        state.radarLayers = state.buienradarLayers; // Use same reference for animation
+        
+        // Update slider range
+        elements.timelineSlider.max = state.radarLayers.length - 1;
+        elements.timelineSlider.value = nowIndex;
+        state.currentRadarIndex = nowIndex;
+        
+        // Add all layers to map (hidden initially)
+        state.radarLayers.forEach(item => {
+            item.layer.addTo(state.map);
+        });
+        
+        // Show current frame
+        updateRadarFrame();
+        
+        elements.mapOverlay.classList.add('hidden');
+        
+        // Autoplay radar animation
+        if (!state.isPlaying) {
+            startRadarAnimation();
+        }
+        
+    } catch (error) {
+        console.error('Error loading Buienradar data:', error);
+        elements.mapOverlay.classList.add('hidden');
+    }
+}
+
+// Load radar data from RainViewer API
+async function loadRainviewerData() {
     elements.mapOverlay.classList.remove('hidden');
     
     try {

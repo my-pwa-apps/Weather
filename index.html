@@ -191,6 +191,10 @@
                     <div class="map-header">
                         <h3 class="section-title" id="titleRadar">Neerslag Radar</h3>
                         <div class="map-controls">
+                            <select id="radarSourceSelect" class="map-style-select" aria-label="Radarbron">
+                                <option value="buienradar" selected>Buienradar</option>
+                                <option value="rainviewer">RainViewer</option>
+                            </select>
                             <select id="mapStyleSelect" class="map-style-select" aria-label="Kaartstijl">
                                 <option value="voyager">Voyager</option>
                                 <option value="light">Light</option>
@@ -304,6 +308,22 @@
                         </button>
                         <button class="settings-toggle-btn" id="langEnBtn" data-lang="en">
                             <span>English</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Appearance Settings -->
+                <div class="settings-section">
+                    <h3 class="settings-section-title" id="settingsAppearanceTitle">Weergave</h3>
+                    <div class="settings-toggle-group">
+                        <button class="settings-toggle-btn" id="themeAutoBtn" data-theme="auto">
+                            <span id="themeAutoText">Auto</span>
+                        </button>
+                        <button class="settings-toggle-btn" id="themeLightBtn" data-theme="light">
+                            <span id="themeLightText">Licht</span>
+                        </button>
+                        <button class="settings-toggle-btn active" id="themeDarkBtn" data-theme="dark">
+                            <span id="themeDarkText">Donker</span>
                         </button>
                     </div>
                 </div>
