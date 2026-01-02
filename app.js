@@ -365,7 +365,7 @@ const state = {
     animationSpeed: config.animationSpeed,
     activeTab: config.defaultTab,
     mapInitialized: false,
-    mapStyle: 'voyager',
+    mapStyle: 'satellite',
     baseLayer: null,
     language: config.defaultLanguage,
     use24HourFormat: true,
