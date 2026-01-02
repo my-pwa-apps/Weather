@@ -112,6 +112,8 @@ const translations = {
             themeDark: 'Donker',
             back: 'Terug',
             highLow: 'Hoog / Laag',
+            sunrise: 'Zonsopgang',
+            sunset: 'Zonsondergang',
             favorites: 'Favorieten',
             addToFavorites: 'Toevoegen aan favorieten',
             removeFromFavorites: 'Verwijderen',
@@ -256,6 +258,8 @@ const translations = {
             themeDark: 'Dark',
             back: 'Back',
             highLow: 'High / Low',
+            sunrise: 'Sunrise',
+            sunset: 'Sunset',
             favorites: 'Favorites',
             addToFavorites: 'Add to favorites',
             removeFromFavorites: 'Remove',
@@ -551,7 +555,11 @@ const elements = {
     dailyDetailHighLow: document.getElementById('dailyDetailHighLow'),
     dailyDetailHighLowLabel: document.getElementById('dailyDetailHighLowLabel'),
     dailyDetailPrecip: document.getElementById('dailyDetailPrecip'),
-    dailyDetailPrecipLabel: document.getElementById('dailyDetailPrecipLabel')
+    dailyDetailPrecipLabel: document.getElementById('dailyDetailPrecipLabel'),
+    dailyDetailSunrise: document.getElementById('dailyDetailSunrise'),
+    dailyDetailSunriseLabel: document.getElementById('dailyDetailSunriseLabel'),
+    dailyDetailSunset: document.getElementById('dailyDetailSunset'),
+    dailyDetailSunsetLabel: document.getElementById('dailyDetailSunsetLabel')
 };
 
 // Initialize the app
@@ -1637,7 +1645,7 @@ async function fetchWeather() {
     }
     
     try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day&hourly=temperature_2m,weather_code,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,precipitation,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant,relative_humidity_2m_mean&timezone=auto`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day&hourly=temperature_2m,weather_code,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,precipitation,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant,relative_humidity_2m_mean,sunrise,sunset&timezone=auto`;
         
         const response = await fetch(url);
         
@@ -1889,6 +1897,8 @@ function selectDailyItem(index) {
         const windMax = daily.wind_speed_10m_max[index];
         const windDir = daily.wind_direction_10m_dominant[index];
         const humidity = daily.relative_humidity_2m_mean ? daily.relative_humidity_2m_mean[index] : null;
+        const sunrise = daily.sunrise ? daily.sunrise[index] : null;
+        const sunset = daily.sunset ? daily.sunset[index] : null;
         
         const icon = weatherIcons[weatherCode] || '🌡️';
         const desc = getWeatherDescription(weatherCode);
@@ -1905,6 +1915,20 @@ function selectDailyItem(index) {
             dayName = t(`days.${dayKeys[date.getDay()]}`);
         }
         
+        // Format sunrise/sunset times
+        const formatSunTime = (isoTime) => {
+            if (!isoTime) return '-';
+            const d = new Date(isoTime);
+            const hours = d.getHours();
+            const mins = d.getMinutes().toString().padStart(2, '0');
+            if (state.use24HourFormat) {
+                return `${hours}:${mins}`;
+            }
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const h12 = hours % 12 || 12;
+            return `${h12}:${mins} ${ampm}`;
+        };
+        
         // Update daily detail overlay
         elements.dailyDetailIcon.textContent = icon;
         elements.dailyDetailTemp.textContent = `${dayName}`;
@@ -1914,11 +1938,17 @@ function selectDailyItem(index) {
         elements.dailyDetailHighLow.textContent = `${convertTemp(maxTemp)}° / ${convertTemp(minTemp)}°`;
         elements.dailyDetailPrecip.textContent = `${convertPrecip(precipSum)} ${getPrecipUnit()}`;
         
+        // Update sunrise/sunset
+        if (elements.dailyDetailSunrise) elements.dailyDetailSunrise.textContent = formatSunTime(sunrise);
+        if (elements.dailyDetailSunset) elements.dailyDetailSunset.textContent = formatSunTime(sunset);
+        
         // Update labels
         elements.dailyDetailWindLabel.textContent = t('ui.wind');
         elements.dailyDetailHumidityLabel.textContent = t('ui.humidity');
         elements.dailyDetailHighLowLabel.textContent = t('ui.highLow');
         elements.dailyDetailPrecipLabel.textContent = t('ui.precipitation');
+        if (elements.dailyDetailSunriseLabel) elements.dailyDetailSunriseLabel.textContent = t('ui.sunrise');
+        if (elements.dailyDetailSunsetLabel) elements.dailyDetailSunsetLabel.textContent = t('ui.sunset');
         elements.dailyBackText.textContent = t('ui.back');
         
         // Show the overlay
