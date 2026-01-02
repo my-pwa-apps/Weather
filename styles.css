@@ -1787,14 +1787,85 @@ body.night-mode .map-control-btn:not(.active) {
 /* Weather-based backgrounds */
 body.sunny {
     background: var(--sunny-gradient);
+    --bg-card: rgba(255, 255, 255, 0.85);
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a4a4a;
 }
 
 body.cloudy {
     background: var(--cloudy-gradient);
+    --bg-card: rgba(255, 255, 255, 0.85);
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a4a4a;
 }
 
 body.rainy {
     background: var(--rainy-gradient);
+    --bg-card: rgba(255, 255, 255, 0.85);
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a4a4a;
+}
+
+/* Weather mode card adjustments */
+body.sunny .detail-card,
+body.sunny .hourly-item,
+body.sunny .daily-item,
+body.cloudy .detail-card,
+body.cloudy .hourly-item,
+body.cloudy .daily-item,
+body.rainy .detail-card,
+body.rainy .hourly-item,
+body.rainy .daily-item {
+    background: rgba(255, 255, 255, 0.85);
+}
+
+/* Light weather modes - modal and UI element overrides */
+body.sunny .modal-container,
+body.cloudy .modal-container,
+body.rainy .modal-container {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+body.sunny .modal-content .search-container,
+body.cloudy .modal-content .search-container,
+body.rainy .modal-content .search-container {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.sunny .search-input,
+body.cloudy .search-input,
+body.rainy .search-input {
+    color: var(--text-primary);
+}
+
+body.sunny .modal-content .search-suggestions,
+body.cloudy .modal-content .search-suggestions,
+body.rainy .modal-content .search-suggestions {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.sunny .suggestion-item:hover,
+body.cloudy .suggestion-item:hover,
+body.rainy .suggestion-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+body.sunny .use-location-btn,
+body.cloudy .use-location-btn,
+body.rainy .use-location-btn {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-primary);
+}
+
+body.sunny .map-control-btn:not(.active),
+body.cloudy .map-control-btn:not(.active),
+body.rainy .map-control-btn:not(.active) {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-secondary);
 }
 
 /* Focus styles for accessibility */
