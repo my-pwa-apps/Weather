@@ -1505,9 +1505,28 @@ async function detectLocation() {
             const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=${state.language}`);
             const data = await response.json();
             
+            // Map country codes to short names (matching Open-Meteo format)
+            const countryShortNames = {
+                'NL': state.language === 'nl' ? 'Nederland' : 'Netherlands',
+                'BE': state.language === 'nl' ? 'België' : 'Belgium',
+                'DE': state.language === 'nl' ? 'Duitsland' : 'Germany',
+                'FR': state.language === 'nl' ? 'Frankrijk' : 'France',
+                'GB': state.language === 'nl' ? 'Verenigd Koninkrijk' : 'United Kingdom',
+                'US': state.language === 'nl' ? 'Verenigde Staten' : 'United States',
+                'ES': state.language === 'nl' ? 'Spanje' : 'Spain',
+                'IT': state.language === 'nl' ? 'Italië' : 'Italy',
+                'PT': state.language === 'nl' ? 'Portugal' : 'Portugal',
+                'AT': state.language === 'nl' ? 'Oostenrijk' : 'Austria',
+                'CH': state.language === 'nl' ? 'Zwitserland' : 'Switzerland',
+                'LU': state.language === 'nl' ? 'Luxemburg' : 'Luxembourg'
+            };
+            
+            const countryCode = data.countryCode || '';
+            const countryName = countryShortNames[countryCode] || data.countryName || '';
+            
             state.currentLocation = {
                 name: data.city || data.locality || data.principalSubdivision || 'Your Location',
-                country: data.countryName || '',
+                country: countryName,
                 latitude,
                 longitude
             };
