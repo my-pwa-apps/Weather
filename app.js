@@ -120,7 +120,15 @@ const translations = {
             noFavorites: 'Geen favorieten opgeslagen',
             updateAvailable: 'Er is een update beschikbaar',
             refresh: 'Vernieuwen',
-            later: 'Later'
+            later: 'Later',
+            settingsDataSource: 'Gegevensbron',
+            settingsDataSourceDesc: 'Kies een weermodel om te vergelijken.',
+            dataSourceAuto: 'Automatisch',
+            dataSourceECMWF: 'ECMWF',
+            dataSourceGFS: 'GFS (VS)',
+            dataSourceDWD: 'DWD (Duitsland)',
+            dataSourceKNMI: 'KNMI (Nederland)',
+            dataSourceMeteoFrance: 'Météo-France'
         },
         // Wind directions
         windDir: {
@@ -266,7 +274,15 @@ const translations = {
             noFavorites: 'No favorites saved',
             updateAvailable: 'Update available',
             refresh: 'Refresh',
-            later: 'Later'
+            later: 'Later',
+            settingsDataSource: 'Data Source',
+            settingsDataSourceDesc: 'Choose a weather model to compare.',
+            dataSourceAuto: 'Auto (Best)',
+            dataSourceECMWF: 'ECMWF',
+            dataSourceGFS: 'GFS (US)',
+            dataSourceDWD: 'DWD (Germany)',
+            dataSourceKNMI: 'KNMI (Netherlands)',
+            dataSourceMeteoFrance: 'Météo-France'
         },
         // Wind directions
         windDir: {
@@ -416,6 +432,7 @@ const state = {
     mapStyle: 'satellite',
     baseLayer: null,
     language: config.defaultLanguage,
+    dataSource: 'auto',
     theme: 'dark',
     use24HourFormat: true,
     useCelsius: true,
@@ -559,7 +576,10 @@ const elements = {
     dailyDetailSunrise: document.getElementById('dailyDetailSunrise'),
     dailyDetailSunriseLabel: document.getElementById('dailyDetailSunriseLabel'),
     dailyDetailSunset: document.getElementById('dailyDetailSunset'),
-    dailyDetailSunsetLabel: document.getElementById('dailyDetailSunsetLabel')
+    dailyDetailSunsetLabel: document.getElementById('dailyDetailSunsetLabel'),
+    // Data source settings
+    settingsDataSourceTitle: document.getElementById('settingsDataSourceTitle'),
+    dataSourceSelect: document.getElementById('dataSourceSelect')
 };
 
 // Initialize the app
@@ -603,6 +623,12 @@ async function init() {
         }
     }
     
+    // Load saved data source
+    const savedDataSource = localStorage.getItem('weatherDataSource');
+    if (savedDataSource) {
+        state.dataSource = savedDataSource;
+    }
+    
     registerServiceWorker();
     setupEventListeners();
     setupTabs();
@@ -614,6 +640,7 @@ async function init() {
     updateUnitButtons();
     updateLanguageButtons();
     updateThemeButtons();
+    updateDataSourceSelect();
     setInterval(updateDateTime, 60000);
     
     // Apply initial theme
@@ -1093,6 +1120,20 @@ function updateUILanguage() {
     if (elements.themeLightText) elements.themeLightText.textContent = t('ui.themeLight');
     if (elements.themeDarkText) elements.themeDarkText.textContent = t('ui.themeDark');
     
+    // Update data source settings
+    if (elements.settingsDataSourceTitle) elements.settingsDataSourceTitle.textContent = t('ui.settingsDataSource');
+    if (elements.dataSourceSelect) {
+        const options = elements.dataSourceSelect.options;
+        if (options.length >= 6) {
+            options[0].textContent = t('ui.dataSourceAuto');
+            options[1].textContent = t('ui.dataSourceECMWF');
+            options[2].textContent = t('ui.dataSourceGFS');
+            options[3].textContent = t('ui.dataSourceDWD');
+            options[4].textContent = t('ui.dataSourceKNMI');
+            options[5].textContent = t('ui.dataSourceMeteoFrance');
+        }
+    }
+    
     // Update favorites dropdown
     const favoritesTitle = document.getElementById('favoritesTitle');
     const addFavoriteText = document.getElementById('addFavoriteText');
@@ -1425,6 +1466,13 @@ function setupEventListeners() {
         elements.themeDarkBtn.addEventListener('click', () => setTheme('dark'));
     }
     
+    // Data source selector
+    if (elements.dataSourceSelect) {
+        elements.dataSourceSelect.addEventListener('change', (e) => {
+            setDataSource(e.target.value);
+        });
+    }
+    
     // Search functionality
     if (elements.searchBtn) {
         elements.searchBtn.addEventListener('click', handleSearch);
@@ -1714,7 +1762,8 @@ async function fetchWeather() {
     }
     
     try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day&hourly=temperature_2m,weather_code,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,precipitation,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant,relative_humidity_2m_mean,sunrise,sunset&timezone=auto`;
+        const modelParam = dataSources[state.dataSource]?.param || '';
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,precipitation,is_day&hourly=temperature_2m,weather_code,relative_humidity_2m,apparent_temperature,wind_speed_10m,wind_direction_10m,precipitation,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max,wind_direction_10m_dominant,relative_humidity_2m_mean,sunrise,sunset&timezone=auto${modelParam}`;
         
         const response = await fetch(url);
         
@@ -2114,6 +2163,34 @@ function updateThemeButtons() {
     }
     if (elements.themeDarkBtn) {
         elements.themeDarkBtn.classList.toggle('active', state.theme === 'dark');
+    }
+}
+
+// Data source functions
+const dataSources = {
+    auto: { name: 'auto', param: '' },
+    ecmwf: { name: 'ecmwf', param: '&models=ecmwf_ifs025' },
+    gfs: { name: 'gfs', param: '&models=gfs_seamless' },
+    dwd: { name: 'dwd', param: '&models=icon_seamless' },
+    knmi: { name: 'knmi', param: '&models=knmi_seamless' },
+    meteofrance: { name: 'meteofrance', param: '&models=meteofrance_seamless' }
+};
+
+function setDataSource(source) {
+    if (!dataSources[source]) return;
+    state.dataSource = source;
+    localStorage.setItem('weatherDataSource', source);
+    updateDataSourceSelect();
+    
+    // Refresh weather data with new source
+    if (state.currentLocation) {
+        fetchWeather();
+    }
+}
+
+function updateDataSourceSelect() {
+    if (elements.dataSourceSelect) {
+        elements.dataSourceSelect.value = state.dataSource;
     }
 }
 

@@ -1431,6 +1431,48 @@ body {
     color: var(--text-primary);
 }
 
+/* Data source select dropdown */
+.data-source-select {
+    width: 100%;
+    padding: var(--space-md);
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: var(--radius-md);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    outline: none;
+    transition: all var(--duration-fast) var(--ease-fluent);
+}
+
+.data-source-select:hover {
+    border-color: rgba(102, 126, 234, 0.4);
+}
+
+.data-source-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.data-source-select option {
+    background: white;
+    color: var(--text-primary);
+    padding: var(--space-sm);
+}
+
+body.night-mode .data-source-select {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+}
+
+body.night-mode .data-source-select option {
+    background: #1a1a2e;
+    color: white;
+}
+
 /* ========================================
    INSTALL PROMPT
    ======================================== */
