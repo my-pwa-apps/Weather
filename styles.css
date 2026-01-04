@@ -2031,7 +2031,7 @@ html {
 }
 
 /* Force portrait orientation on mobile */
-@media screen and (orientation: landscape) and (max-height: 500px) {
+@media screen and (orientation: landscape) and (max-width: 900px) {
     body::before {
         content: '📱 Draai je telefoon voor de beste ervaring';
         position: fixed;
@@ -2045,6 +2045,18 @@ html {
         text-align: center;
         padding: 2rem;
         z-index: 10000;
+    }
+    
+    body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: var(--primary-gradient);
+        z-index: 9999;
+    }
+    
+    .app-container {
+        display: none !important;
     }
 }
 
