@@ -1704,6 +1704,9 @@ function setupTabs() {
     
     // Setup swipe gestures for tab navigation
     setupSwipeGestures();
+    
+    // Setup keyboard navigation
+    setupKeyboardNavigation();
 }
 
 // Swipe gesture support for mobile tab navigation
@@ -1781,6 +1784,158 @@ function setupSwipeGestures() {
     }
 }
 
+// Keyboard navigation for desktop
+function setupKeyboardNavigation() {
+    document.addEventListener('keydown', (e) => {
+        // Don't handle if modal is open or user is typing in input
+        if (elements.settingsModal && !elements.settingsModal.classList.contains('hidden')) return;
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        const key = e.key;
+        const currentTabIndex = tabOrder.indexOf(state.activeTab);
+        
+        // Check if detail overlays are open
+        const hourlyOverlayOpen = elements.hourlyDetailOverlay && !elements.hourlyDetailOverlay.classList.contains('hidden');
+        const dailyOverlayOpen = elements.dailyDetailOverlay && !elements.dailyDetailOverlay.classList.contains('hidden');
+        
+        // Escape to close detail overlays
+        if (key === 'Escape') {
+            if (hourlyOverlayOpen) {
+                hideHourlyDetail();
+                e.preventDefault();
+                return;
+            }
+            if (dailyOverlayOpen) {
+                hideDailyDetail();
+                e.preventDefault();
+                return;
+            }
+        }
+        
+        // Tab navigation with Left/Right arrows (when not in hourly/daily item navigation mode)
+        if (!hourlyOverlayOpen && !dailyOverlayOpen) {
+            // Navigate between tabs with arrow keys
+            if (key === 'ArrowLeft' && state.activeTab !== 'hourly' && state.activeTab !== 'daily') {
+                if (currentTabIndex > 0) {
+                    switchTab(tabOrder[currentTabIndex - 1]);
+                    e.preventDefault();
+                    return;
+                }
+            }
+            if (key === 'ArrowRight' && state.activeTab !== 'hourly' && state.activeTab !== 'daily') {
+                if (currentTabIndex < tabOrder.length - 1) {
+                    switchTab(tabOrder[currentTabIndex + 1]);
+                    e.preventDefault();
+                    return;
+                }
+            }
+        }
+        
+        // Hourly tab keyboard navigation
+        if (state.activeTab === 'hourly' && !hourlyOverlayOpen) {
+            const items = elements.hourlyForecast.querySelectorAll('.hourly-item');
+            const itemCount = items.length;
+            if (itemCount === 0) return;
+            
+            // Initialize selection if none
+            if (state.selectedHourIndex === null && (key === 'ArrowLeft' || key === 'ArrowRight' || key === 'ArrowUp' || key === 'ArrowDown' || key === 'Enter')) {
+                state.selectedHourIndex = 0;
+                updateHourlySelection();
+                e.preventDefault();
+                return;
+            }
+            
+            // Grid navigation (6 columns x 4 rows typically)
+            const cols = 6;
+            if (key === 'ArrowRight') {
+                state.selectedHourIndex = Math.min(state.selectedHourIndex + 1, itemCount - 1);
+                updateHourlySelection();
+                e.preventDefault();
+            } else if (key === 'ArrowLeft') {
+                state.selectedHourIndex = Math.max(state.selectedHourIndex - 1, 0);
+                updateHourlySelection();
+                e.preventDefault();
+            } else if (key === 'ArrowDown') {
+                state.selectedHourIndex = Math.min(state.selectedHourIndex + cols, itemCount - 1);
+                updateHourlySelection();
+                e.preventDefault();
+            } else if (key === 'ArrowUp') {
+                state.selectedHourIndex = Math.max(state.selectedHourIndex - cols, 0);
+                updateHourlySelection();
+                e.preventDefault();
+            } else if (key === 'Enter') {
+                selectHourlyItem(state.selectedHourIndex);
+                e.preventDefault();
+            }
+            return;
+        }
+        
+        // Daily tab keyboard navigation
+        if (state.activeTab === 'daily' && !dailyOverlayOpen) {
+            const items = elements.dailyForecast.querySelectorAll('.daily-item');
+            const itemCount = items.length;
+            if (itemCount === 0) return;
+            
+            // Initialize selection if none
+            if (state.selectedDayIndex === null && (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Enter')) {
+                state.selectedDayIndex = 0;
+                updateDailySelection();
+                e.preventDefault();
+                return;
+            }
+            
+            if (key === 'ArrowDown') {
+                state.selectedDayIndex = Math.min(state.selectedDayIndex + 1, itemCount - 1);
+                updateDailySelection();
+                e.preventDefault();
+            } else if (key === 'ArrowUp') {
+                state.selectedDayIndex = Math.max(state.selectedDayIndex - 1, 0);
+                updateDailySelection();
+                e.preventDefault();
+            } else if (key === 'Enter') {
+                selectDailyItem(state.selectedDayIndex);
+                e.preventDefault();
+            }
+            return;
+        }
+        
+        // In detail overlays, backspace/escape goes back
+        if (hourlyOverlayOpen && (key === 'Backspace' || key === 'ArrowLeft')) {
+            hideHourlyDetail();
+            e.preventDefault();
+            return;
+        }
+        if (dailyOverlayOpen && (key === 'Backspace' || key === 'ArrowLeft')) {
+            hideDailyDetail();
+            e.preventDefault();
+            return;
+        }
+        
+        // Tab navigation when not in hourly/daily
+        if (key === 'ArrowLeft' && currentTabIndex > 0) {
+            switchTab(tabOrder[currentTabIndex - 1]);
+            e.preventDefault();
+        } else if (key === 'ArrowRight' && currentTabIndex < tabOrder.length - 1) {
+            switchTab(tabOrder[currentTabIndex + 1]);
+            e.preventDefault();
+        }
+    });
+}
+
+// Update hourly selection visually (without opening detail)
+function updateHourlySelection() {
+    elements.hourlyForecast.querySelectorAll('.hourly-item').forEach((item, i) => {
+        item.classList.toggle('selected', i === state.selectedHourIndex);
+    });
+}
+
+// Update daily selection visually (without opening detail)
+function updateDailySelection() {
+    elements.dailyForecast.querySelectorAll('.daily-item').forEach((item, i) => {
+        item.classList.toggle('selected', i === state.selectedDayIndex);
+    });
+}
+
 function switchTab(tabId) {
     state.activeTab = tabId;
     
@@ -1796,6 +1951,10 @@ function switchTab(tabId) {
     if (elements.dailyDetailOverlay) {
         elements.dailyDetailOverlay.classList.add('hidden');
     }
+    
+    // Reset selection state when switching tabs
+    state.selectedHourIndex = null;
+    state.selectedDayIndex = null;
     
     // Update button states
     elements.tabBtns.forEach(btn => {
@@ -2500,7 +2659,13 @@ function renderDailyForecast(daily) {
         const isSelected = state.selectedDayIndex === index;
         
         // Check for warnings on this day
-        const dayWarning = state.weatherData ? detectWarnings(state.weatherData, index) : null;
+        // For today (index 0), use KNMI warning if available, otherwise client-side detection
+        let dayWarning = null;
+        if (index === 0 && state.knmiWarning) {
+            dayWarning = state.knmiWarning;
+        } else if (state.weatherData) {
+            dayWarning = detectWarnings(state.weatherData, index);
+        }
         const warningIndicator = dayWarning 
             ? `<div class="daily-warning-indicator ${getWarningColorClass(dayWarning.level)}" title="${dayWarning.title}"></div>`
             : '';
