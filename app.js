@@ -163,6 +163,31 @@ const translations = {
         time: {
             now: 'Nu',
             today: 'Vandaag'
+        },
+        // Weather warnings
+        warnings: {
+            none: 'Geen waarschuwing',
+            yellow: 'Code geel',
+            orange: 'Code oranje',
+            red: 'Code rood',
+            wind: 'Krachtige wind',
+            windDesc: 'Windstoten tot {speed}. Houd rekening met omvallende takken en moeilijker verkeer.',
+            storm: 'Storm',
+            stormDesc: 'Zeer krachtige wind met windstoten tot {speed}. Blijf binnen indien mogelijk.',
+            rain: 'Zware regen',
+            rainDesc: 'Veel neerslag verwacht ({amount}). Kans op wateroverlast.',
+            snow: 'Sneeuwval',
+            snowDesc: 'Sneeuwval verwacht. Gladheid en verkeershinder mogelijk.',
+            ice: 'IJzel / gladheid',
+            iceDesc: 'IJzel of ijsregen. Zeer glad op wegen en paden.',
+            thunder: 'Onweer',
+            thunderDesc: 'Onweer verwacht met kans op hagel en windstoten.',
+            fog: 'Dichte mist',
+            fogDesc: 'Zicht sterk beperkt. Pas snelheid aan.',
+            heat: 'Extreme hitte',
+            heatDesc: 'Temperaturen boven {temp}. Beperk inspanning en drink voldoende.',
+            cold: 'Extreme koude',
+            coldDesc: 'Temperaturen onder {temp}. Bescherm tegen bevriezing.'
         }
     },
     en: {
@@ -315,6 +340,31 @@ const translations = {
         time: {
             now: 'Now',
             today: 'Today'
+        },
+        // Weather warnings
+        warnings: {
+            none: 'No warning',
+            yellow: 'Yellow warning',
+            orange: 'Orange warning',
+            red: 'Red warning',
+            wind: 'Strong wind',
+            windDesc: 'Wind gusts up to {speed}. Watch for falling branches and difficult traffic.',
+            storm: 'Storm',
+            stormDesc: 'Very strong winds with gusts up to {speed}. Stay indoors if possible.',
+            rain: 'Heavy rain',
+            rainDesc: 'High precipitation expected ({amount}). Risk of flooding.',
+            snow: 'Snowfall',
+            snowDesc: 'Snowfall expected. Possible slippery roads and traffic disruption.',
+            ice: 'Ice / slippery conditions',
+            iceDesc: 'Freezing rain or ice. Very slippery roads and paths.',
+            thunder: 'Thunderstorm',
+            thunderDesc: 'Thunderstorms expected with possible hail and wind gusts.',
+            fog: 'Dense fog',
+            fogDesc: 'Visibility severely reduced. Adjust your speed.',
+            heat: 'Extreme heat',
+            heatDesc: 'Temperatures above {temp}. Limit physical activity and stay hydrated.',
+            cold: 'Extreme cold',
+            coldDesc: 'Temperatures below {temp}. Protect against frostbite.'
         }
     }
 };
@@ -371,6 +421,300 @@ const debounce = (func, wait) => {
         timeout = setTimeout(() => func(...args), wait);
     };
 };
+
+// ========================================
+// WEATHER WARNINGS
+// ========================================
+
+/**
+ * Detect weather warnings based on current/forecast conditions
+ * Inspired by KNMI warning levels: Yellow (code geel), Orange (code oranje), Red (code rood)
+ * Returns: { level: 'none'|'yellow'|'orange'|'red', type: string, description: string, icon: string }
+ */
+function detectWarnings(weatherData, dayIndex = null) {
+    const warnings = [];
+    
+    // Determine which data to check
+    let weatherCode, windSpeed, precipitation, tempMax, tempMin;
+    
+    if (dayIndex !== null && weatherData.daily) {
+        // Daily data
+        weatherCode = weatherData.daily.weather_code[dayIndex];
+        windSpeed = weatherData.daily.wind_speed_10m_max[dayIndex];
+        precipitation = weatherData.daily.precipitation_sum[dayIndex];
+        tempMax = weatherData.daily.temperature_2m_max[dayIndex];
+        tempMin = weatherData.daily.temperature_2m_min[dayIndex];
+    } else if (weatherData.current) {
+        // Current data
+        weatherCode = weatherData.current.weather_code;
+        windSpeed = weatherData.current.wind_speed_10m;
+        precipitation = weatherData.current.precipitation;
+        tempMax = weatherData.current.temperature_2m;
+        tempMin = weatherData.current.temperature_2m;
+        
+        // Also check today's forecast for more context
+        if (weatherData.daily) {
+            precipitation = weatherData.daily.precipitation_sum[0] || precipitation;
+            tempMax = weatherData.daily.temperature_2m_max[0] || tempMax;
+            tempMin = weatherData.daily.temperature_2m_min[0] || tempMin;
+        }
+    } else {
+        return null;
+    }
+    
+    // Check for thunderstorm (weather codes 95, 96, 99)
+    if ([95, 96, 99].includes(weatherCode)) {
+        const level = weatherCode === 99 ? 'orange' : 'yellow';
+        const hasHail = [96, 99].includes(weatherCode);
+        warnings.push({
+            level,
+            type: 'thunder',
+            icon: '⛈️',
+            title: t('warnings.thunder'),
+            description: t('warnings.thunderDesc')
+        });
+    }
+    
+    // Check for freezing rain / ice (weather codes 56, 57, 66, 67)
+    if ([56, 57, 66, 67].includes(weatherCode)) {
+        const level = [57, 67].includes(weatherCode) ? 'orange' : 'yellow';
+        warnings.push({
+            level,
+            type: 'ice',
+            icon: '🧊',
+            title: t('warnings.ice'),
+            description: t('warnings.iceDesc')
+        });
+    }
+    
+    // Check for heavy snow (weather codes 75, 86)
+    if ([75, 86].includes(weatherCode)) {
+        warnings.push({
+            level: 'yellow',
+            type: 'snow',
+            icon: '❄️',
+            title: t('warnings.snow'),
+            description: t('warnings.snowDesc')
+        });
+    }
+    
+    // Check for dense fog (weather codes 45, 48)
+    if ([45, 48].includes(weatherCode)) {
+        warnings.push({
+            level: 'yellow',
+            type: 'fog',
+            icon: '🌫️',
+            title: t('warnings.fog'),
+            description: t('warnings.fogDesc')
+        });
+    }
+    
+    // Check for strong wind (Beaufort 7+ = 50 km/h for yellow, 8+ = 62 km/h for orange, 10+ = 89 km/h for red)
+    if (windSpeed >= 89) {
+        warnings.push({
+            level: 'red',
+            type: 'storm',
+            icon: '🌪️',
+            title: t('warnings.storm'),
+            description: t('warnings.stormDesc').replace('{speed}', `${Math.round(convertSpeed(windSpeed))} ${getSpeedUnit()}`)
+        });
+    } else if (windSpeed >= 62) {
+        warnings.push({
+            level: 'orange',
+            type: 'wind',
+            icon: '💨',
+            title: t('warnings.wind'),
+            description: t('warnings.windDesc').replace('{speed}', `${Math.round(convertSpeed(windSpeed))} ${getSpeedUnit()}`)
+        });
+    } else if (windSpeed >= 50) {
+        warnings.push({
+            level: 'yellow',
+            type: 'wind',
+            icon: '💨',
+            title: t('warnings.wind'),
+            description: t('warnings.windDesc').replace('{speed}', `${Math.round(convertSpeed(windSpeed))} ${getSpeedUnit()}`)
+        });
+    }
+    
+    // Check for heavy rain (>20mm/day for yellow, >40mm for orange, >60mm for red)
+    if (precipitation >= 60) {
+        warnings.push({
+            level: 'red',
+            type: 'rain',
+            icon: '🌧️',
+            title: t('warnings.rain'),
+            description: t('warnings.rainDesc').replace('{amount}', `${convertPrecip(precipitation)} ${getPrecipUnit()}`)
+        });
+    } else if (precipitation >= 40) {
+        warnings.push({
+            level: 'orange',
+            type: 'rain',
+            icon: '🌧️',
+            title: t('warnings.rain'),
+            description: t('warnings.rainDesc').replace('{amount}', `${convertPrecip(precipitation)} ${getPrecipUnit()}`)
+        });
+    } else if (precipitation >= 20) {
+        warnings.push({
+            level: 'yellow',
+            type: 'rain',
+            icon: '🌧️',
+            title: t('warnings.rain'),
+            description: t('warnings.rainDesc').replace('{amount}', `${convertPrecip(precipitation)} ${getPrecipUnit()}`)
+        });
+    }
+    
+    // Check for extreme heat (>35°C for yellow, >38°C for orange, >40°C for red)
+    if (tempMax >= 40) {
+        warnings.push({
+            level: 'red',
+            type: 'heat',
+            icon: '🔥',
+            title: t('warnings.heat'),
+            description: t('warnings.heatDesc').replace('{temp}', `${convertTemp(40)}${getTempUnit()}`)
+        });
+    } else if (tempMax >= 38) {
+        warnings.push({
+            level: 'orange',
+            type: 'heat',
+            icon: '🔥',
+            title: t('warnings.heat'),
+            description: t('warnings.heatDesc').replace('{temp}', `${convertTemp(38)}${getTempUnit()}`)
+        });
+    } else if (tempMax >= 35) {
+        warnings.push({
+            level: 'yellow',
+            type: 'heat',
+            icon: '☀️',
+            title: t('warnings.heat'),
+            description: t('warnings.heatDesc').replace('{temp}', `${convertTemp(35)}${getTempUnit()}`)
+        });
+    }
+    
+    // Check for extreme cold (<-10°C for yellow, <-15°C for orange, <-20°C for red)
+    if (tempMin <= -20) {
+        warnings.push({
+            level: 'red',
+            type: 'cold',
+            icon: '🥶',
+            title: t('warnings.cold'),
+            description: t('warnings.coldDesc').replace('{temp}', `${convertTemp(-20)}${getTempUnit()}`)
+        });
+    } else if (tempMin <= -15) {
+        warnings.push({
+            level: 'orange',
+            type: 'cold',
+            icon: '🥶',
+            title: t('warnings.cold'),
+            description: t('warnings.coldDesc').replace('{temp}', `${convertTemp(-15)}${getTempUnit()}`)
+        });
+    } else if (tempMin <= -10) {
+        warnings.push({
+            level: 'yellow',
+            type: 'cold',
+            icon: '❄️',
+            title: t('warnings.cold'),
+            description: t('warnings.coldDesc').replace('{temp}', `${convertTemp(-10)}${getTempUnit()}`)
+        });
+    }
+    
+    // Return the highest severity warning, or null if none
+    if (warnings.length === 0) return null;
+    
+    // Sort by severity: red > orange > yellow
+    const severityOrder = { red: 3, orange: 2, yellow: 1 };
+    warnings.sort((a, b) => severityOrder[b.level] - severityOrder[a.level]);
+    
+    return warnings[0];
+}
+
+/**
+ * Get warning badge color class
+ */
+function getWarningColorClass(level) {
+    switch (level) {
+        case 'red': return 'warning-red';
+        case 'orange': return 'warning-orange';
+        case 'yellow': return 'warning-yellow';
+        default: return '';
+    }
+}
+
+/**
+ * Fetch official KNMI warnings from Weerlive API
+ * Only used when KNMI is selected as data source and location is in Netherlands
+ * API provides real-time KNMI weather warnings (code geel/oranje/rood)
+ */
+async function fetchKnmiWarnings(locationName) {
+    try {
+        // Weerlive API - free for study/hobby use, provides KNMI warning data
+        // Note: 'demo' key has limited requests; for production use, register at weerlive.nl
+        const response = await fetch(
+            `https://weerlive.nl/api/weerlive_api_v2.php?key=demo&locatie=${encodeURIComponent(locationName)}`
+        );
+        
+        if (!response.ok) {
+            console.log('[KNMI] Failed to fetch warnings:', response.status);
+            return null;
+        }
+        
+        const data = await response.json();
+        
+        if (!data.liveweer || data.liveweer.length === 0) {
+            return null;
+        }
+        
+        const weather = data.liveweer[0];
+        
+        // Check if there's an active alarm
+        if (weather.alarm === 1 && weather.wrschklr) {
+            // Map Dutch color names to our warning levels
+            const colorMap = {
+                'geel': 'yellow',
+                'oranje': 'orange',
+                'rood': 'red'
+            };
+            
+            const level = colorMap[weather.wrschklr.toLowerCase()] || 'yellow';
+            
+            // Determine icon based on warning content
+            let icon = '⚠️';
+            const headline = (weather.lkop || '').toLowerCase();
+            if (headline.includes('sneeuw') || headline.includes('gladheid')) icon = '❄️';
+            else if (headline.includes('wind') || headline.includes('storm')) icon = '💨';
+            else if (headline.includes('regen')) icon = '🌧️';
+            else if (headline.includes('onweer')) icon = '⛈️';
+            else if (headline.includes('mist') || headline.includes('zicht')) icon = '🌫️';
+            else if (headline.includes('hitte')) icon = '🔥';
+            else if (headline.includes('kou')) icon = '🥶';
+            
+            return {
+                level: level,
+                type: 'knmi',
+                icon: icon,
+                title: weather.lkop || t(`warnings.${level}`),
+                description: weather.ltekst || '',
+                isOfficial: true,
+                source: 'KNMI via Weerlive'
+            };
+        }
+        
+        return null;
+    } catch (error) {
+        console.log('[KNMI] Error fetching warnings:', error);
+        return null;
+    }
+}
+
+/**
+ * Check if location is likely in the Netherlands (for KNMI warnings)
+ */
+function isLocationInNetherlands(location) {
+    if (!location) return false;
+    const country = (location.country || '').toLowerCase();
+    return country.includes('nederland') || 
+           country.includes('netherlands') || 
+           country === 'nl';
+}
 
 // ========================================
 // MAP TILE CONFIGURATIONS
@@ -439,7 +783,8 @@ const state = {
     useMetric: true,
     selectedHourIndex: null,
     selectedDayIndex: null,
-    hourlyData: null
+    hourlyData: null,
+    knmiWarning: null  // Store official KNMI warning data from Weerlive API
 };
 
 // DOM Elements
@@ -463,6 +808,12 @@ const elements = {
     weatherIconLarge: document.getElementById('weatherIconLarge'),
     currentTemp: document.getElementById('currentTemp'),
     weatherDescription: document.getElementById('weatherDescription'),
+    // Weather warning elements
+    currentWarning: document.getElementById('currentWarning'),
+    warningBadge: document.getElementById('warningBadge'),
+    warningIcon: document.getElementById('warningIcon'),
+    warningTitle: document.getElementById('warningTitle'),
+    warningDescription: document.getElementById('warningDescription'),
     windSpeed: document.getElementById('windSpeed'),
     humidity: document.getElementById('humidity'),
     feelsLike: document.getElementById('feelsLike'),
@@ -1909,6 +2260,16 @@ async function fetchWeather() {
         const data = await response.json();
         state.weatherData = data;
         
+        // Fetch official KNMI warnings when KNMI is selected and location is in Netherlands
+        state.knmiWarning = null;  // Reset before fetching
+        if (state.dataSource === 'knmi' && isLocationInNetherlands(state.currentLocation)) {
+            try {
+                state.knmiWarning = await fetchKnmiWarnings(name);
+            } catch (e) {
+                console.log('[KNMI] Warning fetch failed, using client-side detection');
+            }
+        }
+        
         renderWeather(data);
         updateBackground(data.current.weather_code, data.current.temperature_2m);
         
@@ -1966,6 +2327,34 @@ function renderWeather(data) {
     // Update temperature unit display in HTML
     const tempUnitEl = document.querySelector('.temperature-unit');
     if (tempUnitEl) tempUnitEl.textContent = getTempUnit();
+    
+    // Check for weather warnings
+    // Use KNMI official warnings when KNMI is selected and location is in Netherlands
+    // Otherwise fall back to client-side warning detection
+    let warning = null;
+    
+    if (state.knmiWarning) {
+        // Use fetched KNMI warning (prioritize official source)
+        warning = state.knmiWarning;
+    } else {
+        // Fall back to client-side detection
+        warning = detectWarnings(data);
+    }
+    
+    if (warning && elements.currentWarning) {
+        elements.currentWarning.classList.remove('hidden', 'warning-yellow', 'warning-orange', 'warning-red');
+        elements.currentWarning.classList.add(getWarningColorClass(warning.level));
+        elements.warningIcon.textContent = warning.icon;
+        elements.warningTitle.textContent = warning.title;
+        elements.warningDescription.textContent = warning.description;
+        
+        // Add source indicator for official KNMI warnings
+        if (warning.isOfficial) {
+            elements.warningDescription.innerHTML = `${warning.description}<br><small style="opacity:0.7">📡 ${warning.source}</small>`;
+        }
+    } else if (elements.currentWarning) {
+        elements.currentWarning.classList.add('hidden');
+    }
     
     // Hourly forecast
     renderHourlyForecast(data.hourly);
@@ -2109,11 +2498,18 @@ function renderDailyForecast(daily) {
         }
         const icon = getWeatherIcon(daily.weather_code[index], true);
         const isSelected = state.selectedDayIndex === index;
+        
+        // Check for warnings on this day
+        const dayWarning = state.weatherData ? detectWarnings(state.weatherData, index) : null;
+        const warningIndicator = dayWarning 
+            ? `<div class="daily-warning-indicator ${getWarningColorClass(dayWarning.level)}" title="${dayWarning.title}"></div>`
+            : '';
 
         return `
             <div class="daily-item ${isSelected ? 'selected' : ''}" data-index="${index}">
                 <div class="daily-day">${dayName}</div>
                 <div class="daily-icon">${icon}</div>
+                ${warningIndicator}
                 <div class="daily-temps">
                     <span class="daily-high">${convertTemp(daily.temperature_2m_max[index])}°</span>
                     <span class="daily-low">${convertTemp(daily.temperature_2m_min[index])}°</span>

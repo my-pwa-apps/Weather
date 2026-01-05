@@ -633,6 +633,123 @@ body {
     margin-bottom: var(--space-md);
 }
 
+/* Weather Warning Banner */
+.weather-warning {
+    margin-top: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    text-align: center;
+    animation: warningPulse 2s ease-in-out infinite;
+}
+
+.weather-warning.hidden {
+    display: none;
+}
+
+.weather-warning.warning-yellow {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.2) 100%);
+    border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.weather-warning.warning-orange {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(234, 88, 12, 0.2) 100%);
+    border: 1px solid rgba(249, 115, 22, 0.4);
+}
+
+.weather-warning.warning-red {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.2) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+@keyframes warningPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+}
+
+.warning-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+}
+
+.warning-yellow .warning-badge {
+    background: rgba(251, 191, 36, 0.3);
+    color: #92400e;
+}
+
+.warning-orange .warning-badge {
+    background: rgba(249, 115, 22, 0.3);
+    color: #9a3412;
+}
+
+.warning-red .warning-badge {
+    background: rgba(239, 68, 68, 0.3);
+    color: #991b1b;
+}
+
+.warning-icon {
+    font-size: 1rem;
+}
+
+.warning-title {
+    font-weight: 600;
+}
+
+.warning-description {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Dark mode warning adjustments */
+body.night-mode .warning-yellow .warning-badge {
+    color: #fbbf24;
+}
+
+body.night-mode .warning-orange .warning-badge {
+    color: #fb923c;
+}
+
+body.night-mode .warning-red .warning-badge {
+    color: #f87171;
+}
+
+body.night-mode .weather-warning .warning-description {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Daily forecast warning indicator */
+.daily-warning-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-left: auto;
+    margin-right: var(--space-sm);
+}
+
+.daily-warning-indicator.warning-yellow {
+    background: #fbbf24;
+    box-shadow: 0 0 6px rgba(251, 191, 36, 0.5);
+}
+
+.daily-warning-indicator.warning-orange {
+    background: #f97316;
+    box-shadow: 0 0 6px rgba(249, 115, 22, 0.5);
+}
+
+.daily-warning-indicator.warning-red {
+    background: #ef4444;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+}
+
 /* Weather Details Grid - Equal sized tiles */
 .weather-details {
     flex: 1;
