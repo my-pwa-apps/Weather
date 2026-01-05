@@ -1969,8 +1969,6 @@ function setupKeyboardNavigation() {
             }
             return;
         }
-            return;
-        }
         
         // In detail overlays, backspace/escape goes back
         if (hourlyOverlayOpen && (key === 'Backspace' || key === 'ArrowLeft')) {
