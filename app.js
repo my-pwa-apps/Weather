@@ -1208,10 +1208,7 @@ const elements = {
     dailyWarningTitle: document.getElementById('dailyWarningTitle'),
     // Data source settings
     settingsDataSourceTitle: document.getElementById('settingsDataSourceTitle'),
-    dataSourceSelect: document.getElementById('dataSourceSelect'),
-    // Pull to refresh
-    pullRefreshIndicator: document.getElementById('pullRefreshIndicator'),
-    pullRefreshText: document.getElementById('pullRefreshText')
+    dataSourceSelect: document.getElementById('dataSourceSelect')
 };
 
 // Initialize the app
@@ -1337,135 +1334,6 @@ async function refreshLocationName(latitude, longitude) {
             state.currentLocation = JSON.parse(savedLocation);
         }
     }
-}
-
-// Pull to refresh functionality
-function setupPullToRefresh() {
-    const container = document.querySelector('.app-container');
-    if (!container) return;
-    
-    let touchStartY = 0;
-    let touchCurrentY = 0;
-    let isPulling = false;
-    let isRefreshing = false;
-    const pullThreshold = 80;
-    const maxPull = 120;
-    
-    function handleTouchStart(e) {
-        // Only enable pull-to-refresh when at the top of content
-        if (isRefreshing) return;
-        
-        // Don't trigger on map or slider interactions
-        if (e.target.closest('#precipMap') || e.target.closest('#timelineSlider')) return;
-        
-        // Check if we're scrolled to top (or near top)
-        const activePanel = document.querySelector('.tab-panel.active');
-        const scrollableContent = activePanel?.querySelector('.hourly-scroll, .daily-forecast, .forecast-section, .weather-main');
-        if (scrollableContent && scrollableContent.scrollTop > 5) return;
-        
-        touchStartY = e.touches[0].clientY;
-        isPulling = true;
-    }
-    
-    function handleTouchMove(e) {
-        if (!isPulling || isRefreshing) return;
-        
-        touchCurrentY = e.touches[0].clientY;
-        const pullDistance = touchCurrentY - touchStartY;
-        
-        // Only activate when pulling down
-        if (pullDistance < 0) {
-            isPulling = false;
-            return;
-        }
-        
-        // Calculate pull progress (0 to 1)
-        const progress = Math.min(pullDistance / pullThreshold, 1);
-        const translateY = Math.min(pullDistance * 0.5, maxPull * 0.5);
-        
-        // Update indicator
-        const indicator = elements.pullRefreshIndicator;
-        if (indicator) {
-            indicator.classList.add('pulling');
-            indicator.classList.remove('visible');
-            indicator.style.transform = `translateX(-50%) translateY(${translateY - 60}px)`;
-            indicator.style.opacity = progress;
-            
-            // Rotate spinner based on pull progress
-            const spinner = indicator.querySelector('.pull-refresh-spinner');
-            if (spinner) {
-                spinner.style.transform = `rotate(${progress * 360}deg)`;
-            }
-            
-            // Update text
-            if (elements.pullRefreshText) {
-                elements.pullRefreshText.textContent = progress >= 1 
-                    ? (state.language === 'nl' ? 'Loslaten om te vernieuwen' : 'Release to refresh')
-                    : (state.language === 'nl' ? 'Trek omlaag om te vernieuwen' : 'Pull down to refresh');
-            }
-        }
-        
-        // Prevent default scroll if we're pulling
-        if (pullDistance > 10) {
-            e.preventDefault();
-        }
-    }
-    
-    function handleTouchEnd() {
-        if (!isPulling || isRefreshing) return;
-        
-        const pullDistance = touchCurrentY - touchStartY;
-        const indicator = elements.pullRefreshIndicator;
-        
-        if (pullDistance >= pullThreshold && state.currentLocation) {
-            // Trigger refresh
-            isRefreshing = true;
-            
-            if (indicator) {
-                indicator.classList.remove('pulling');
-                indicator.classList.add('visible');
-                indicator.style.transform = '';
-                indicator.style.opacity = '';
-                
-                const spinner = indicator.querySelector('.pull-refresh-spinner');
-                if (spinner) {
-                    spinner.style.transform = '';
-                }
-                
-                if (elements.pullRefreshText) {
-                    elements.pullRefreshText.textContent = state.language === 'nl' ? 'Vernieuwen...' : 'Refreshing...';
-                }
-            }
-            
-            // Fetch new weather data
-            fetchWeather().finally(() => {
-                isRefreshing = false;
-                if (indicator) {
-                    indicator.classList.remove('visible');
-                }
-            });
-        } else {
-            // Cancel pull
-            if (indicator) {
-                indicator.classList.remove('pulling', 'visible');
-                indicator.style.transform = '';
-                indicator.style.opacity = '';
-                
-                const spinner = indicator.querySelector('.pull-refresh-spinner');
-                if (spinner) {
-                    spinner.style.transform = '';
-                }
-            }
-        }
-        
-        isPulling = false;
-        touchStartY = 0;
-        touchCurrentY = 0;
-    }
-    
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd, { passive: true });
 }
 
 // Settings modal functions
@@ -2556,9 +2424,6 @@ function setupEventListeners() {
     if (elements.dailyBackBtn) {
         elements.dailyBackBtn.addEventListener('click', hideDailyDetail);
     }
-    
-    // Pull to refresh
-    setupPullToRefresh();
 }
 
 // Detect user location
@@ -3027,16 +2892,19 @@ function renderDailyForecast(daily) {
         } else if (state.weatherData) {
             dayWarning = detectWarnings(state.weatherData, index);
         }
-        // Always include warning indicator div for consistent grid layout
-        const warningIndicator = dayWarning 
-            ? `<div class="daily-warning-indicator ${getWarningColorClass(dayWarning.level)}" title="${dayWarning.title}"></div>`
-            : `<div class="daily-warning-indicator"></div>`;
+        
+        // Add warning dot (positioned absolutely in corner, like hourly)
+        const hasWarning = dayWarning !== null;
+        const warningClass = hasWarning ? 'has-warning' : '';
+        const warningDot = hasWarning 
+            ? `<div class="daily-warning-dot ${getWarningColorClass(dayWarning.level)}"></div>`
+            : '';
 
         return `
-            <div class="daily-item ${isSelected ? 'selected' : ''}" data-index="${index}">
+            <div class="daily-item ${isSelected ? 'selected' : ''} ${warningClass}" data-index="${index}">
+                ${warningDot}
                 <div class="daily-day">${dayName}</div>
                 <div class="daily-icon">${icon}</div>
-                ${warningIndicator}
                 <div class="daily-temps">
                     <span class="daily-high">${convertTemp(daily.temperature_2m_max[index])}°</span>
                     <span class="daily-low">${convertTemp(daily.temperature_2m_min[index])}°</span>
