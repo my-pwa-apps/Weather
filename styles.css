@@ -702,6 +702,10 @@ body {
     line-height: 1.4;
 }
 
+.warning-description:empty {
+    display: none;
+}
+
 /* Dark mode warning adjustments */
 body.night-mode .warning-yellow .warning-badge {
     color: #fbbf24;

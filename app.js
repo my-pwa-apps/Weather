@@ -737,6 +737,7 @@ function getWarningLevel(level) {
  * KNMI Open Data API configuration
  */
 const KNMI_API_KEY = 'eyJvcmciOiI1ZTU1NGUxOTI3NGE5NjAwMDEyYTNlYjEiLCJpZCI6ImFlZmMyY2MxZDQ3OTQ1NDA5ZWM0ZmZjODU1MGU4NWYyIiwiaCI6Im11cm11cjEyOCJ9';
+const CORS_PROXY = 'https://corsproxy.io/?';
 
 /**
  * Fetch official KNMI warnings from KNMI Open Data API
@@ -745,7 +746,7 @@ const KNMI_API_KEY = 'eyJvcmciOiI1ZTU1NGUxOTI3NGE5NjAwMDEyYTNlYjEiLCJpZCI6ImFlZm
  */
 async function fetchKnmiWarnings(locationName) {
     try {
-        // Try KNMI Open Data API first
+        // Try KNMI Open Data API first (via CORS proxy)
         const knmiWarning = await fetchKnmiOpenDataWarnings();
         if (knmiWarning) {
             return knmiWarning;
@@ -764,14 +765,16 @@ async function fetchKnmiWarnings(locationName) {
 }
 
 /**
- * Fetch warnings from KNMI Open Data API
+ * Fetch warnings from KNMI Open Data API via CORS proxy
  * Uses file-based API to get latest warning file
  */
 async function fetchKnmiOpenDataWarnings() {
     try {
-        // List files in the warnings dataset
+        const baseUrl = 'https://api.dataplatform.knmi.nl/open-data/v1/datasets/waarschuwingen_nederland_48h/versions/1.0/files';
+        
+        // List files in the warnings dataset (via CORS proxy)
         const listResponse = await fetch(
-            'https://api.dataplatform.knmi.nl/open-data/v1/datasets/waarschuwingen_nederland_48h/versions/1.0/files?maxKeys=1&orderBy=created&sorting=desc',
+            `${CORS_PROXY}${encodeURIComponent(baseUrl + '?maxKeys=1&orderBy=created&sorting=desc')}`,
             {
                 headers: {
                     'Authorization': KNMI_API_KEY
@@ -789,10 +792,10 @@ async function fetchKnmiOpenDataWarnings() {
             return null;
         }
         
-        // Get download URL for the latest file
+        // Get download URL for the latest file (via CORS proxy)
         const latestFile = listData.files[0].filename;
         const urlResponse = await fetch(
-            `https://api.dataplatform.knmi.nl/open-data/v1/datasets/waarschuwingen_nederland_48h/versions/1.0/files/${latestFile}/url`,
+            `${CORS_PROXY}${encodeURIComponent(baseUrl + '/' + latestFile + '/url')}`,
             {
                 headers: {
                     'Authorization': KNMI_API_KEY
@@ -806,15 +809,19 @@ async function fetchKnmiOpenDataWarnings() {
         
         const urlData = await urlResponse.json();
         
-        // Download the actual warning file (TXT format)
+        // Download the actual warning file (the temp URL should work without proxy)
         const warningResponse = await fetch(urlData.temporaryDownloadUrl);
         if (!warningResponse.ok) {
-            return null;
+            // Try with CORS proxy as fallback
+            const proxyWarningResponse = await fetch(`${CORS_PROXY}${encodeURIComponent(urlData.temporaryDownloadUrl)}`);
+            if (!proxyWarningResponse.ok) {
+                return null;
+            }
+            const warningText = await proxyWarningResponse.text();
+            return parseKnmiWarningText(warningText);
         }
         
         const warningText = await warningResponse.text();
-        
-        // Parse KNMI warning text format
         return parseKnmiWarningText(warningText);
     } catch (error) {
         return null;
@@ -836,7 +843,6 @@ function parseKnmiWarningText(text) {
     // KNMI uses: GEEL (yellow), ORANJE (orange), ROOD (red)
     let level = null;
     let title = '';
-    let description = '';
     let icon = '⚠️';
     let type = 'knmi';
     
@@ -893,20 +899,11 @@ function parseKnmiWarningText(text) {
         title = t(`warnings.${level}`);
     }
     
-    // Extract first meaningful line as description (skip headers/metadata)
-    for (const line of lines) {
-        if (line.length > 20 && !line.startsWith('#') && !line.includes('=')) {
-            description = line;
-            break;
-        }
-    }
-    
     return {
         level,
         type,
         icon,
         title,
-        description,
         isOfficial: true,
         source: 'KNMI'
     };
@@ -2839,12 +2836,8 @@ function renderWeather(data) {
         elements.currentWarning.classList.add(getWarningColorClass(warning.level));
         elements.warningIcon.textContent = warning.icon;
         elements.warningTitle.textContent = warning.title;
-        elements.warningDescription.textContent = warning.description;
-        
-        // Add source indicator for official KNMI warnings
-        if (warning.isOfficial) {
-            elements.warningDescription.innerHTML = `${warning.description}<br><small style="opacity:0.7">📡 ${warning.source}</small>`;
-        }
+        // Show short warning - hide long description
+        elements.warningDescription.textContent = '';
     } else if (elements.currentWarning) {
         elements.currentWarning.classList.add('hidden');
     }
