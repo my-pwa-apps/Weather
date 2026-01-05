@@ -1837,25 +1837,56 @@ function setupKeyboardNavigation() {
         if (state.activeTab === 'hourly' && !hourlyOverlayOpen) {
             const items = elements.hourlyForecast.querySelectorAll('.hourly-item');
             const itemCount = items.length;
-            if (itemCount === 0) return;
             
-            // Initialize selection if none
-            if (state.selectedHourIndex === null && (key === 'ArrowLeft' || key === 'ArrowRight' || key === 'ArrowUp' || key === 'ArrowDown' || key === 'Enter')) {
-                state.selectedHourIndex = 0;
-                updateHourlySelection();
-                e.preventDefault();
+            // If no selection yet, allow tab navigation
+            if (state.selectedHourIndex === null) {
+                if (key === 'ArrowLeft' && currentTabIndex > 0) {
+                    switchTab(tabOrder[currentTabIndex - 1]);
+                    e.preventDefault();
+                    return;
+                }
+                if (key === 'ArrowRight' && currentTabIndex < tabOrder.length - 1) {
+                    switchTab(tabOrder[currentTabIndex + 1]);
+                    e.preventDefault();
+                    return;
+                }
+                // Enter or arrow down/up starts selection
+                if (key === 'Enter' || key === 'ArrowDown' || key === 'ArrowUp') {
+                    state.selectedHourIndex = 0;
+                    updateHourlySelection();
+                    e.preventDefault();
+                    return;
+                }
                 return;
             }
+            
+            if (itemCount === 0) return;
             
             // Grid navigation (6 columns x 4 rows typically)
             const cols = 6;
             if (key === 'ArrowRight') {
-                state.selectedHourIndex = Math.min(state.selectedHourIndex + 1, itemCount - 1);
-                updateHourlySelection();
+                if (state.selectedHourIndex >= itemCount - 1) {
+                    // At right edge, switch to next tab
+                    if (currentTabIndex < tabOrder.length - 1) {
+                        state.selectedHourIndex = null;
+                        switchTab(tabOrder[currentTabIndex + 1]);
+                    }
+                } else {
+                    state.selectedHourIndex = Math.min(state.selectedHourIndex + 1, itemCount - 1);
+                    updateHourlySelection();
+                }
                 e.preventDefault();
             } else if (key === 'ArrowLeft') {
-                state.selectedHourIndex = Math.max(state.selectedHourIndex - 1, 0);
-                updateHourlySelection();
+                if (state.selectedHourIndex <= 0) {
+                    // At left edge, switch to previous tab
+                    if (currentTabIndex > 0) {
+                        state.selectedHourIndex = null;
+                        switchTab(tabOrder[currentTabIndex - 1]);
+                    }
+                } else {
+                    state.selectedHourIndex = Math.max(state.selectedHourIndex - 1, 0);
+                    updateHourlySelection();
+                }
                 e.preventDefault();
             } else if (key === 'ArrowDown') {
                 state.selectedHourIndex = Math.min(state.selectedHourIndex + cols, itemCount - 1);
@@ -1868,6 +1899,11 @@ function setupKeyboardNavigation() {
             } else if (key === 'Enter') {
                 selectHourlyItem(state.selectedHourIndex);
                 e.preventDefault();
+            } else if (key === 'Escape') {
+                // Escape clears selection, allows tab navigation again
+                state.selectedHourIndex = null;
+                updateHourlySelection();
+                e.preventDefault();
             }
             return;
         }
@@ -1876,12 +1912,41 @@ function setupKeyboardNavigation() {
         if (state.activeTab === 'daily' && !dailyOverlayOpen) {
             const items = elements.dailyForecast.querySelectorAll('.daily-item');
             const itemCount = items.length;
+            
+            // If no selection yet, allow tab navigation with left/right
+            if (state.selectedDayIndex === null) {
+                if (key === 'ArrowLeft' && currentTabIndex > 0) {
+                    switchTab(tabOrder[currentTabIndex - 1]);
+                    e.preventDefault();
+                    return;
+                }
+                if (key === 'ArrowRight' && currentTabIndex < tabOrder.length - 1) {
+                    switchTab(tabOrder[currentTabIndex + 1]);
+                    e.preventDefault();
+                    return;
+                }
+                // Enter or up/down starts selection
+                if (key === 'Enter' || key === 'ArrowUp' || key === 'ArrowDown') {
+                    state.selectedDayIndex = 0;
+                    updateDailySelection();
+                    e.preventDefault();
+                    return;
+                }
+                return;
+            }
+            
             if (itemCount === 0) return;
             
-            // Initialize selection if none
-            if (state.selectedDayIndex === null && (key === 'ArrowUp' || key === 'ArrowDown' || key === 'Enter')) {
-                state.selectedDayIndex = 0;
-                updateDailySelection();
+            // Left/Right for tab navigation when in selection mode
+            if (key === 'ArrowLeft' && currentTabIndex > 0) {
+                state.selectedDayIndex = null;
+                switchTab(tabOrder[currentTabIndex - 1]);
+                e.preventDefault();
+                return;
+            }
+            if (key === 'ArrowRight' && currentTabIndex < tabOrder.length - 1) {
+                state.selectedDayIndex = null;
+                switchTab(tabOrder[currentTabIndex + 1]);
                 e.preventDefault();
                 return;
             }
@@ -1897,7 +1962,14 @@ function setupKeyboardNavigation() {
             } else if (key === 'Enter') {
                 selectDailyItem(state.selectedDayIndex);
                 e.preventDefault();
+            } else if (key === 'Escape') {
+                // Escape clears selection
+                state.selectedDayIndex = null;
+                updateDailySelection();
+                e.preventDefault();
             }
+            return;
+        }
             return;
         }
         
@@ -2424,9 +2496,12 @@ async function fetchWeather() {
         // Fetch official KNMI warnings for Netherlands locations (works with any data source)
         // This ensures Dutch users always see official KNMI weather warnings
         state.knmiWarning = null;  // Reset before fetching
+        console.log('[KNMI] Location check:', state.currentLocation, 'isNL:', isLocationInNetherlands(state.currentLocation));
         if (isLocationInNetherlands(state.currentLocation)) {
             try {
+                console.log('[KNMI] Fetching warnings for:', name);
                 state.knmiWarning = await fetchKnmiWarnings(name);
+                console.log('[KNMI] Warning result:', state.knmiWarning);
             } catch (e) {
                 console.log('[KNMI] Warning fetch failed, using client-side detection');
             }
