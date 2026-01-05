@@ -646,10 +646,9 @@ function getWarningColorClass(level) {
  */
 async function fetchKnmiWarnings(locationName) {
     try {
-        // Weerlive API - free for study/hobby use, provides KNMI warning data
-        // Note: 'demo' key has limited requests; for production use, register at weerlive.nl
+        // Weerlive API - provides KNMI warning data
         const response = await fetch(
-            `https://weerlive.nl/api/weerlive_api_v2.php?key=demo&locatie=${encodeURIComponent(locationName)}`
+            `https://weerlive.nl/api/weerlive_api_v2.php?key=75e2e46533&locatie=${encodeURIComponent(locationName)}`
         );
         
         if (!response.ok) {
