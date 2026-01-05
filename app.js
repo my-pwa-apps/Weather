@@ -371,7 +371,7 @@ const translations = {
 
 // Weather code to icon mapping (day)
 const weatherIconsDay = {
-    0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️',
+    0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '�', 48: '🌁',
     51: '🌧️', 53: '🌧️', 55: '🌧️', 56: '🌧️', 57: '🌧️',
     61: '🌧️', 63: '🌧️', 65: '🌧️', 66: '🌨️', 67: '🌨️',
     71: '❄️', 73: '❄️', 75: '❄️', 77: '🌨️', 80: '🌦️', 81: '🌦️', 82: '🌧️',
@@ -380,7 +380,7 @@ const weatherIconsDay = {
 
 // Weather code to icon mapping (night)
 const weatherIconsNight = {
-    0: '🌙', 1: '🌙', 2: '☁️', 3: '☁️', 45: '🌫️', 48: '🌫️',
+    0: '🌙', 1: '🌙', 2: '☁️', 3: '☁️', 45: '�', 48: '🌁',
     51: '🌧️', 53: '🌧️', 55: '🌧️', 56: '🌧️', 57: '🌧️',
     61: '🌧️', 63: '🌧️', 65: '🌧️', 66: '🌨️', 67: '🌨️',
     71: '❄️', 73: '❄️', 75: '❄️', 77: '🌨️', 80: '🌧️', 81: '🌧️', 82: '🌧️',
@@ -503,7 +503,7 @@ function detectWarnings(weatherData, dayIndex = null) {
         warnings.push({
             level: 'yellow',
             type: 'fog',
-            icon: '🌫️',
+            icon: '�',
             title: t('warnings.fog'),
             description: t('warnings.fogDesc')
         });
@@ -665,7 +665,7 @@ function detectHourlyWarning(weatherCode, windSpeed, precipitation, temperature)
     
     // Check for dense fog (weather codes 45, 48)
     else if ([45, 48].includes(weatherCode)) {
-        warning = { level: 'yellow', type: 'fog', icon: '🌫️', title: t('warnings.fog') };
+        warning = { level: 'yellow', type: 'fog', icon: '�', title: t('warnings.fog') };
     }
     
     // Check for strong wind
@@ -884,7 +884,7 @@ function parseKnmiWarningText(text) {
         type = 'thunder';
         title = t('warnings.thunder');
     } else if (fullText.includes('mist') || fullText.includes('zicht')) {
-        icon = '🌫️';
+        icon = '�';
         type = 'fog';
         title = t('warnings.fog');
     } else if (fullText.includes('hitte') || fullText.includes('warm')) {
@@ -946,7 +946,7 @@ async function fetchWeerliveWarnings(locationName) {
             else if (headline.includes('wind') || headline.includes('storm')) icon = '💨';
             else if (headline.includes('regen')) icon = '🌧️';
             else if (headline.includes('onweer')) icon = '⛈️';
-            else if (headline.includes('mist') || headline.includes('zicht')) icon = '🌫️';
+            else if (headline.includes('mist') || headline.includes('zicht')) icon = '�';
             else if (headline.includes('hitte')) icon = '🔥';
             else if (headline.includes('kou')) icon = '🥶';
             
@@ -1071,10 +1071,8 @@ const elements = {
     weatherDescription: document.getElementById('weatherDescription'),
     // Weather warning elements
     currentWarning: document.getElementById('currentWarning'),
-    warningBadge: document.getElementById('warningBadge'),
     warningIcon: document.getElementById('warningIcon'),
     warningTitle: document.getElementById('warningTitle'),
-    warningDescription: document.getElementById('warningDescription'),
     windSpeed: document.getElementById('windSpeed'),
     humidity: document.getElementById('humidity'),
     feelsLike: document.getElementById('feelsLike'),
@@ -2836,8 +2834,6 @@ function renderWeather(data) {
         elements.currentWarning.classList.add(getWarningColorClass(warning.level));
         elements.warningIcon.textContent = warning.icon;
         elements.warningTitle.textContent = warning.title;
-        // Show short warning - hide long description
-        elements.warningDescription.textContent = '';
     } else if (elements.currentWarning) {
         elements.currentWarning.classList.add('hidden');
     }

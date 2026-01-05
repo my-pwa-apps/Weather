@@ -627,14 +627,16 @@ body {
     margin-bottom: var(--space-md);
 }
 
-/* Weather Warning Banner */
+/* Weather Warning Banner - Now view (pill style like detail view) */
 .weather-warning {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
     margin-top: var(--space-sm);
-    margin-bottom: var(--space-sm);
-    padding: var(--space-md);
-    border-radius: var(--radius-md);
-    text-align: center;
-    animation: warningPulse 2s ease-in-out infinite;
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
 }
 
 .weather-warning.hidden {
@@ -642,48 +644,40 @@ body {
 }
 
 .weather-warning.warning-yellow {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.2) 100%);
-    border: 1px solid rgba(251, 191, 36, 0.4);
+    background: rgba(251, 191, 36, 0.2);
+    border: 1px solid rgba(251, 191, 36, 0.5);
 }
 
 .weather-warning.warning-orange {
-    background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(234, 88, 12, 0.2) 100%);
-    border: 1px solid rgba(249, 115, 22, 0.4);
+    background: rgba(249, 115, 22, 0.2);
+    border: 1px solid rgba(249, 115, 22, 0.5);
 }
 
 .weather-warning.warning-red {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.2) 100%);
-    border: 1px solid rgba(239, 68, 68, 0.4);
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.5);
 }
 
-@keyframes warningPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.85; }
+.warning-icon {
+    font-size: 1rem;
 }
 
-.warning-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-xs);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--radius-full);
-    font-size: 0.85rem;
+.warning-title {
     font-weight: 600;
-    margin-bottom: var(--space-xs);
 }
 
-.warning-yellow .warning-badge {
-    background: rgba(251, 191, 36, 0.3);
+.warning-yellow,
+.warning-yellow .warning-title {
     color: #92400e;
 }
 
-.warning-orange .warning-badge {
-    background: rgba(249, 115, 22, 0.3);
+.warning-orange,
+.warning-orange .warning-title {
     color: #9a3412;
 }
 
-.warning-red .warning-badge {
-    background: rgba(239, 68, 68, 0.3);
+.warning-red,
+.warning-red .warning-title {
     color: #991b1b;
 }
 
@@ -707,20 +701,19 @@ body {
 }
 
 /* Dark mode warning adjustments */
-body.night-mode .warning-yellow .warning-badge {
+body.night-mode .weather-warning.warning-yellow,
+body.night-mode .weather-warning.warning-yellow .warning-title {
     color: #fbbf24;
 }
 
-body.night-mode .warning-orange .warning-badge {
+body.night-mode .weather-warning.warning-orange,
+body.night-mode .weather-warning.warning-orange .warning-title {
     color: #fb923c;
 }
 
-body.night-mode .warning-red .warning-badge {
+body.night-mode .weather-warning.warning-red,
+body.night-mode .weather-warning.warning-red .warning-title {
     color: #f87171;
-}
-
-body.night-mode .weather-warning .warning-description {
-    color: rgba(255, 255, 255, 0.7);
 }
 
 /* Daily forecast warning indicator */
@@ -810,8 +803,8 @@ body.night-mode .detail-warning-banner.warning-red {
 
 .hourly-warning-dot {
     position: absolute;
-    top: 2px;
-    right: 2px;
+    top: 4px;
+    right: 4px;
     width: 6px;
     height: 6px;
     border-radius: 50%;
