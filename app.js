@@ -389,8 +389,19 @@ const weatherIconsNight = {
 
 // Function to get weather icon based on day/night
 function getWeatherIcon(code, isDay = true) {
+    // Handle fog specially with SVG
+    if (code === 45 || code === 48) {
+        return '<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 14h10M4 18h14M4 22h16M4 10h6"/></svg>';
+    }
     const icons = isDay ? weatherIconsDay : weatherIconsNight;
     return icons[code] || '🌡️';
+}
+
+/**
+ * Get fog icon as SVG
+ */
+function getFogIcon() {
+    return '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 14h10M4 18h14M4 22h16M4 10h6"/></svg>';
 }
 
 // Beaufort scale thresholds (km/h)
@@ -503,7 +514,7 @@ function detectWarnings(weatherData, dayIndex = null) {
         warnings.push({
             level: 'yellow',
             type: 'fog',
-            icon: '�',
+            icon: getFogIcon(),
             title: t('warnings.fog'),
             description: t('warnings.fogDesc')
         });
@@ -665,7 +676,7 @@ function detectHourlyWarning(weatherCode, windSpeed, precipitation, temperature)
     
     // Check for dense fog (weather codes 45, 48)
     else if ([45, 48].includes(weatherCode)) {
-        warning = { level: 'yellow', type: 'fog', icon: '�', title: t('warnings.fog') };
+        warning = { level: 'yellow', type: 'fog', icon: getFogIcon(), title: t('warnings.fog') };
     }
     
     // Check for strong wind
@@ -884,7 +895,7 @@ function parseKnmiWarningText(text) {
         type = 'thunder';
         title = t('warnings.thunder');
     } else if (fullText.includes('mist') || fullText.includes('zicht')) {
-        icon = '�';
+        icon = getFogIcon();
         type = 'fog';
         title = t('warnings.fog');
     } else if (fullText.includes('hitte') || fullText.includes('warm')) {
@@ -946,7 +957,7 @@ async function fetchWeerliveWarnings(locationName) {
             else if (headline.includes('wind') || headline.includes('storm')) icon = '💨';
             else if (headline.includes('regen')) icon = '🌧️';
             else if (headline.includes('onweer')) icon = '⛈️';
-            else if (headline.includes('mist') || headline.includes('zicht')) icon = '�';
+            else if (headline.includes('mist') || headline.includes('zicht')) icon = getFogIcon();
             else if (headline.includes('hitte')) icon = '🔥';
             else if (headline.includes('kou')) icon = '🥶';
             
@@ -2804,7 +2815,7 @@ function renderWeather(data) {
     state.selectedHourIndex = null;
     
     // Current weather
-    elements.weatherIconLarge.textContent = weatherIcon;
+    elements.weatherIconLarge.innerHTML = weatherIcon;
     elements.currentTemp.textContent = convertTemp(current.temperature_2m);
     elements.weatherDescription.textContent = weatherDesc;
     elements.windSpeed.innerHTML = `${windDir} ${windSpeed} ${getSpeedUnit()}<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
@@ -2832,7 +2843,7 @@ function renderWeather(data) {
     if (warning && elements.currentWarning) {
         elements.currentWarning.classList.remove('hidden', 'warning-yellow', 'warning-orange', 'warning-red');
         elements.currentWarning.classList.add(getWarningColorClass(warning.level));
-        elements.warningIcon.textContent = warning.icon;
+        elements.warningIcon.innerHTML = warning.icon;
         elements.warningTitle.textContent = warning.title;
     } else if (elements.currentWarning) {
         elements.currentWarning.classList.add('hidden');
@@ -2950,7 +2961,7 @@ function selectHourlyItem(index) {
         const windDirText = getWindDirection(windDir);
         
         // Update hourly detail overlay
-        elements.hourlyDetailIcon.textContent = icon;
+        elements.hourlyDetailIcon.innerHTML = icon;
         elements.hourlyDetailTemp.textContent = convertTemp(temp);
         elements.hourlyDetailDesc.textContent = `${formatHour(date.getHours())} - ${desc}`;
         elements.hourlyDetailWind.innerHTML = `${windDirText} ${convertSpeed(windSpeed)} ${getSpeedUnit()}<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
@@ -2974,7 +2985,7 @@ function selectHourlyItem(index) {
         if (hourlyWarning && elements.hourlyDetailWarning) {
             elements.hourlyDetailWarning.classList.remove('hidden', 'warning-yellow', 'warning-orange', 'warning-red');
             elements.hourlyDetailWarning.classList.add(getWarningColorClass(hourlyWarning.level));
-            elements.hourlyWarningIcon.textContent = hourlyWarning.icon;
+            elements.hourlyWarningIcon.innerHTML = hourlyWarning.icon;
             elements.hourlyWarningTitle.textContent = hourlyWarning.title;
         } else if (elements.hourlyDetailWarning) {
             elements.hourlyDetailWarning.classList.add('hidden');
@@ -3128,7 +3139,7 @@ function selectDailyItem(index) {
         if (dayWarning && elements.dailyDetailWarning) {
             elements.dailyDetailWarning.classList.remove('hidden', 'warning-yellow', 'warning-orange', 'warning-red');
             elements.dailyDetailWarning.classList.add(getWarningColorClass(dayWarning.level));
-            elements.dailyWarningIcon.textContent = dayWarning.icon;
+            elements.dailyWarningIcon.innerHTML = dayWarning.icon;
             elements.dailyWarningTitle.textContent = dayWarning.title;
         } else if (elements.dailyDetailWarning) {
             elements.dailyDetailWarning.classList.add('hidden');
