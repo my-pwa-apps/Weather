@@ -665,8 +665,10 @@ async function fetchKnmiWarnings(locationName) {
         
         const weather = data.liveweer[0];
         
-        // Check if there's an active alarm
-        if (weather.alarm === 1 && weather.wrschklr) {
+        console.log('[KNMI] API response:', { alarm: weather.alarm, color: weather.wrschklr, headline: weather.lkop });
+        
+        // Check if there's an active alarm (API may return 1 or "1")
+        if ((weather.alarm == 1 || weather.alarm === '1') && weather.wrschklr) {
             // Map Dutch color names to our warning levels
             const colorMap = {
                 'geel': 'yellow',
@@ -2419,9 +2421,10 @@ async function fetchWeather() {
         const data = await response.json();
         state.weatherData = data;
         
-        // Fetch official KNMI warnings when KNMI is selected and location is in Netherlands
+        // Fetch official KNMI warnings for Netherlands locations (works with any data source)
+        // This ensures Dutch users always see official KNMI weather warnings
         state.knmiWarning = null;  // Reset before fetching
-        if (state.dataSource === 'knmi' && isLocationInNetherlands(state.currentLocation)) {
+        if (isLocationInNetherlands(state.currentLocation)) {
             try {
                 state.knmiWarning = await fetchKnmiWarnings(name);
             } catch (e) {
@@ -2666,9 +2669,10 @@ function renderDailyForecast(daily) {
         } else if (state.weatherData) {
             dayWarning = detectWarnings(state.weatherData, index);
         }
+        // Always include warning indicator div for consistent grid layout
         const warningIndicator = dayWarning 
             ? `<div class="daily-warning-indicator ${getWarningColorClass(dayWarning.level)}" title="${dayWarning.title}"></div>`
-            : '';
+            : `<div class="daily-warning-indicator"></div>`;
 
         return `
             <div class="daily-item ${isSelected ? 'selected' : ''}" data-index="${index}">

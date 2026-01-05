@@ -900,7 +900,7 @@ body.night-mode .weather-warning .warning-description {
 .daily-item {
     flex: 1;
     display: grid;
-    grid-template-columns: 1fr 40px 70px;
+    grid-template-columns: 1fr 40px 20px 70px;
     align-items: center;
     padding: var(--space-md);
     background: rgba(0, 0, 0, 0.03);
