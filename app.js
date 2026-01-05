@@ -640,19 +640,288 @@ function getWarningColorClass(level) {
 }
 
 /**
- * Fetch official KNMI warnings from Weerlive API
- * Only used when KNMI is selected as data source and location is in Netherlands
- * API provides real-time KNMI weather warnings (code geel/oranje/rood)
+ * Detect warnings for a specific hour based on weather conditions
+ * Returns a simplified warning object with level, type, icon, and title
+ */
+function detectHourlyWarning(weatherCode, windSpeed, precipitation, temperature) {
+    let warning = null;
+    
+    // Check for thunderstorm (weather codes 95, 96, 99)
+    if ([95, 96, 99].includes(weatherCode)) {
+        const level = weatherCode === 99 ? 'orange' : 'yellow';
+        warning = { level, type: 'thunder', icon: '⛈️', title: t('warnings.thunder') };
+    }
+    
+    // Check for freezing rain / ice (weather codes 56, 57, 66, 67)
+    else if ([56, 57, 66, 67].includes(weatherCode)) {
+        const level = [57, 67].includes(weatherCode) ? 'orange' : 'yellow';
+        warning = { level, type: 'ice', icon: '🧊', title: t('warnings.ice') };
+    }
+    
+    // Check for heavy snow (weather codes 75, 86)
+    else if ([75, 86].includes(weatherCode)) {
+        warning = { level: 'yellow', type: 'snow', icon: '❄️', title: t('warnings.snow') };
+    }
+    
+    // Check for dense fog (weather codes 45, 48)
+    else if ([45, 48].includes(weatherCode)) {
+        warning = { level: 'yellow', type: 'fog', icon: '🌫️', title: t('warnings.fog') };
+    }
+    
+    // Check for strong wind
+    if (windSpeed >= 89) {
+        const newWarning = { level: 'red', type: 'storm', icon: '🌪️', title: t('warnings.storm') };
+        if (!warning || getWarningLevel(newWarning.level) > getWarningLevel(warning.level)) {
+            warning = newWarning;
+        }
+    } else if (windSpeed >= 62) {
+        const newWarning = { level: 'orange', type: 'wind', icon: '💨', title: t('warnings.wind') };
+        if (!warning || getWarningLevel(newWarning.level) > getWarningLevel(warning.level)) {
+            warning = newWarning;
+        }
+    } else if (windSpeed >= 50) {
+        const newWarning = { level: 'yellow', type: 'wind', icon: '💨', title: t('warnings.wind') };
+        if (!warning || getWarningLevel(newWarning.level) > getWarningLevel(warning.level)) {
+            warning = newWarning;
+        }
+    }
+    
+    // Check for extreme heat (>35°C)
+    if (temperature >= 40) {
+        const newWarning = { level: 'red', type: 'heat', icon: '🔥', title: t('warnings.heat') };
+        if (!warning || getWarningLevel(newWarning.level) > getWarningLevel(warning.level)) {
+            warning = newWarning;
+        }
+    } else if (temperature >= 38) {
+        const newWarning = { level: 'orange', type: 'heat', icon: '🔥', title: t('warnings.heat') };
+        if (!warning || getWarningLevel(newWarning.level) > getWarningLevel(warning.level)) {
+            warning = newWarning;
+        }
+    } else if (temperature >= 35) {
+        const newWarning = { level: 'yellow', type: 'heat', icon: '☀️', title: t('warnings.heat') };
+        if (!warning || getWarningLevel(newWarning.level) > getWarningLevel(warning.level)) {
+            warning = newWarning;
+        }
+    }
+    
+    // Check for extreme cold (<-10°C)
+    if (temperature <= -20) {
+        const newWarning = { level: 'red', type: 'cold', icon: '🥶', title: t('warnings.cold') };
+        if (!warning || getWarningLevel(newWarning.level) > getWarningLevel(warning.level)) {
+            warning = newWarning;
+        }
+    } else if (temperature <= -15) {
+        const newWarning = { level: 'orange', type: 'cold', icon: '🥶', title: t('warnings.cold') };
+        if (!warning || getWarningLevel(newWarning.level) > getWarningLevel(warning.level)) {
+            warning = newWarning;
+        }
+    } else if (temperature <= -10) {
+        const newWarning = { level: 'yellow', type: 'cold', icon: '❄️', title: t('warnings.cold') };
+        if (!warning || getWarningLevel(newWarning.level) > getWarningLevel(warning.level)) {
+            warning = newWarning;
+        }
+    }
+    
+    return warning;
+}
+
+/**
+ * Helper function to get numeric warning level for comparison
+ */
+function getWarningLevel(level) {
+    const severityOrder = { red: 3, orange: 2, yellow: 1 };
+    return severityOrder[level] || 0;
+}
+
+/**
+ * KNMI Open Data API configuration
+ */
+const KNMI_API_KEY = 'eyJvcmciOiI1ZTU1NGUxOTI3NGE5NjAwMDEyYTNlYjEiLCJpZCI6ImFlZmMyY2MxZDQ3OTQ1NDA5ZWM0ZmZjODU1MGU4NWYyIiwiaCI6Im11cm11cjEyOCJ9';
+
+/**
+ * Fetch official KNMI warnings from KNMI Open Data API
+ * Dataset: waarschuwingen-nederland-48h (Dutch weather warnings up to 48 hours)
+ * Falls back to Weerlive API if KNMI Open Data fails
  */
 async function fetchKnmiWarnings(locationName) {
     try {
-        // Weerlive API - provides KNMI warning data
+        // Try KNMI Open Data API first
+        const knmiWarning = await fetchKnmiOpenDataWarnings();
+        if (knmiWarning) {
+            return knmiWarning;
+        }
+        
+        // Fallback to Weerlive API
+        return await fetchWeerliveWarnings(locationName);
+    } catch (error) {
+        // Try fallback
+        try {
+            return await fetchWeerliveWarnings(locationName);
+        } catch {
+            return null;
+        }
+    }
+}
+
+/**
+ * Fetch warnings from KNMI Open Data API
+ * Uses file-based API to get latest warning file
+ */
+async function fetchKnmiOpenDataWarnings() {
+    try {
+        // List files in the warnings dataset
+        const listResponse = await fetch(
+            'https://api.dataplatform.knmi.nl/open-data/v1/datasets/waarschuwingen_nederland_48h/versions/1.0/files?maxKeys=1&orderBy=created&sorting=desc',
+            {
+                headers: {
+                    'Authorization': KNMI_API_KEY
+                }
+            }
+        );
+        
+        if (!listResponse.ok) {
+            return null;
+        }
+        
+        const listData = await listResponse.json();
+        
+        if (!listData.files || listData.files.length === 0) {
+            return null;
+        }
+        
+        // Get download URL for the latest file
+        const latestFile = listData.files[0].filename;
+        const urlResponse = await fetch(
+            `https://api.dataplatform.knmi.nl/open-data/v1/datasets/waarschuwingen_nederland_48h/versions/1.0/files/${latestFile}/url`,
+            {
+                headers: {
+                    'Authorization': KNMI_API_KEY
+                }
+            }
+        );
+        
+        if (!urlResponse.ok) {
+            return null;
+        }
+        
+        const urlData = await urlResponse.json();
+        
+        // Download the actual warning file (TXT format)
+        const warningResponse = await fetch(urlData.temporaryDownloadUrl);
+        if (!warningResponse.ok) {
+            return null;
+        }
+        
+        const warningText = await warningResponse.text();
+        
+        // Parse KNMI warning text format
+        return parseKnmiWarningText(warningText);
+    } catch (error) {
+        return null;
+    }
+}
+
+/**
+ * Parse KNMI warning text format
+ * The format typically contains lines with warning info
+ */
+function parseKnmiWarningText(text) {
+    if (!text || text.trim().length === 0) {
+        return null;
+    }
+    
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    
+    // Look for warning indicators in the text
+    // KNMI uses: GEEL (yellow), ORANJE (orange), ROOD (red)
+    let level = null;
+    let title = '';
+    let description = '';
+    let icon = '⚠️';
+    let type = 'knmi';
+    
+    const fullText = text.toLowerCase();
+    
+    // Detect warning level
+    if (fullText.includes('code rood') || fullText.includes('rood')) {
+        level = 'red';
+    } else if (fullText.includes('code oranje') || fullText.includes('oranje')) {
+        level = 'orange';
+    } else if (fullText.includes('code geel') || fullText.includes('geel')) {
+        level = 'yellow';
+    }
+    
+    // If no warning level found, no active warning
+    if (!level) {
+        return null;
+    }
+    
+    // Detect warning type and set icon
+    if (fullText.includes('sneeuw') || fullText.includes('gladheid') || fullText.includes('ijzel')) {
+        icon = '❄️';
+        type = 'snow';
+        title = t('warnings.snow');
+    } else if (fullText.includes('storm') || fullText.includes('zeer zware windstoten')) {
+        icon = '🌪️';
+        type = 'storm';
+        title = t('warnings.storm');
+    } else if (fullText.includes('wind') || fullText.includes('windstoten')) {
+        icon = '💨';
+        type = 'wind';
+        title = t('warnings.wind');
+    } else if (fullText.includes('regen') || fullText.includes('neerslag')) {
+        icon = '🌧️';
+        type = 'rain';
+        title = t('warnings.rain');
+    } else if (fullText.includes('onweer') || fullText.includes('bliksem')) {
+        icon = '⛈️';
+        type = 'thunder';
+        title = t('warnings.thunder');
+    } else if (fullText.includes('mist') || fullText.includes('zicht')) {
+        icon = '🌫️';
+        type = 'fog';
+        title = t('warnings.fog');
+    } else if (fullText.includes('hitte') || fullText.includes('warm')) {
+        icon = '🔥';
+        type = 'heat';
+        title = t('warnings.heat');
+    } else if (fullText.includes('kou') || fullText.includes('vorst')) {
+        icon = '🥶';
+        type = 'cold';
+        title = t('warnings.cold');
+    } else {
+        title = t(`warnings.${level}`);
+    }
+    
+    // Extract first meaningful line as description (skip headers/metadata)
+    for (const line of lines) {
+        if (line.length > 20 && !line.startsWith('#') && !line.includes('=')) {
+            description = line;
+            break;
+        }
+    }
+    
+    return {
+        level,
+        type,
+        icon,
+        title,
+        description,
+        isOfficial: true,
+        source: 'KNMI'
+    };
+}
+
+/**
+ * Fallback: Fetch warnings from Weerlive API
+ */
+async function fetchWeerliveWarnings(locationName) {
+    try {
         const response = await fetch(
             `https://weerlive.nl/api/weerlive_api_v2.php?key=75e2e46533&locatie=${encodeURIComponent(locationName)}`
         );
         
         if (!response.ok) {
-            console.log('[KNMI] Failed to fetch warnings:', response.status);
             return null;
         }
         
@@ -664,11 +933,8 @@ async function fetchKnmiWarnings(locationName) {
         
         const weather = data.liveweer[0];
         
-        console.log('[KNMI] API response:', { alarm: weather.alarm, color: weather.wrschklr, headline: weather.lkop });
-        
-        // Check if there's an active alarm (API may return 1 or "1")
+        // Check if there's an active alarm
         if ((weather.alarm == 1 || weather.alarm === '1') && weather.wrschklr) {
-            // Map Dutch color names to our warning levels
             const colorMap = {
                 'geel': 'yellow',
                 'oranje': 'orange',
@@ -677,7 +943,6 @@ async function fetchKnmiWarnings(locationName) {
             
             const level = colorMap[weather.wrschklr.toLowerCase()] || 'yellow';
             
-            // Determine icon based on warning content
             let icon = '⚠️';
             const headline = (weather.lkop || '').toLowerCase();
             if (headline.includes('sneeuw') || headline.includes('gladheid')) icon = '❄️';
@@ -689,9 +954,9 @@ async function fetchKnmiWarnings(locationName) {
             else if (headline.includes('kou')) icon = '🥶';
             
             return {
-                level: level,
+                level,
                 type: 'knmi',
-                icon: icon,
+                icon,
                 title: weather.lkop || t(`warnings.${level}`),
                 description: weather.ltekst || '',
                 isOfficial: true,
@@ -701,7 +966,6 @@ async function fetchKnmiWarnings(locationName) {
         
         return null;
     } catch (error) {
-        console.log('[KNMI] Error fetching warnings:', error);
         return null;
     }
 }
@@ -798,7 +1062,6 @@ const elements = {
     locationSearch: document.getElementById('locationSearch'),
     searchBtn: document.getElementById('searchBtn'),
     searchSuggestions: document.getElementById('searchSuggestions'),
-    locationName: document.getElementById('locationName'),
     locationTime: document.getElementById('locationTime'),
     loadingState: document.getElementById('loadingState'),
     loadingText: document.getElementById('loadingText'),
@@ -910,6 +1173,10 @@ const elements = {
     hourlyDetailFeelsLikeLabel: document.getElementById('hourlyDetailFeelsLikeLabel'),
     hourlyDetailPrecip: document.getElementById('hourlyDetailPrecip'),
     hourlyDetailPrecipLabel: document.getElementById('hourlyDetailPrecipLabel'),
+    // Hourly detail warning banner
+    hourlyDetailWarning: document.getElementById('hourlyDetailWarning'),
+    hourlyWarningIcon: document.getElementById('hourlyWarningIcon'),
+    hourlyWarningTitle: document.getElementById('hourlyWarningTitle'),
     // Daily detail overlay
     dailyDetailOverlay: document.getElementById('dailyDetailOverlay'),
     dailyBackBtn: document.getElementById('dailyBackBtn'),
@@ -929,6 +1196,10 @@ const elements = {
     dailyDetailSunriseLabel: document.getElementById('dailyDetailSunriseLabel'),
     dailyDetailSunset: document.getElementById('dailyDetailSunset'),
     dailyDetailSunsetLabel: document.getElementById('dailyDetailSunsetLabel'),
+    // Daily detail warning banner
+    dailyDetailWarning: document.getElementById('dailyDetailWarning'),
+    dailyWarningIcon: document.getElementById('dailyWarningIcon'),
+    dailyWarningTitle: document.getElementById('dailyWarningTitle'),
     // Data source settings
     settingsDataSourceTitle: document.getElementById('settingsDataSourceTitle'),
     dataSourceSelect: document.getElementById('dataSourceSelect'),
@@ -1632,17 +1903,13 @@ async function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         try {
             const registration = await navigator.serviceWorker.register('sw.js');
-            console.log('SW registered:', registration);
             
             // Check for updates
             registration.addEventListener('updatefound', () => {
                 newWorker = registration.installing;
-                console.log('SW update found');
                 
                 newWorker.addEventListener('statechange', () => {
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // New version available
-                        console.log('New SW version available');
                         showUpdateToast();
                     }
                 });
@@ -1650,12 +1917,11 @@ async function registerServiceWorker() {
             
             // Handle controller change (when new SW takes over)
             navigator.serviceWorker.addEventListener('controllerchange', () => {
-                console.log('SW controller changed, reloading...');
                 window.location.reload();
             });
             
         } catch (error) {
-            console.log('SW registration failed:', error);
+            // Service Worker registration failed
         }
     }
 }
@@ -2217,7 +2483,6 @@ function setupEventListeners() {
     
     // Install prompt
     window.addEventListener('beforeinstallprompt', (e) => {
-        console.log('beforeinstallprompt event fired');
         e.preventDefault();
         state.deferredPrompt = e;
         setTimeout(() => {
@@ -2227,21 +2492,19 @@ function setupEventListeners() {
     
     // Check if app is already installed
     window.addEventListener('appinstalled', () => {
-        console.log('App was installed');
         elements.installPrompt.classList.add('hidden');
         state.deferredPrompt = null;
     });
     
     // For iOS - check if running in standalone mode
     if (window.matchMedia('(display-mode: standalone)').matches) {
-        console.log('App is running in standalone mode');
+        // App is running in standalone mode
     }
 
     elements.installBtn.addEventListener('click', async () => {
         if (state.deferredPrompt) {
             state.deferredPrompt.prompt();
-            const result = await state.deferredPrompt.userChoice;
-            console.log('Install prompt result:', result);
+            await state.deferredPrompt.userChoice;
             state.deferredPrompt = null;
         }
         elements.installPrompt.classList.add('hidden');
@@ -2490,17 +2753,13 @@ async function fetchWeather() {
         const data = await response.json();
         state.weatherData = data;
         
-        // Fetch official KNMI warnings for Netherlands locations (works with any data source)
-        // This ensures Dutch users always see official KNMI weather warnings
-        state.knmiWarning = null;  // Reset before fetching
-        console.log('[KNMI] Location check:', state.currentLocation, 'isNL:', isLocationInNetherlands(state.currentLocation));
+        // Fetch official KNMI warnings for Netherlands locations
+        state.knmiWarning = null;
         if (isLocationInNetherlands(state.currentLocation)) {
             try {
-                console.log('[KNMI] Fetching warnings for:', name);
                 state.knmiWarning = await fetchKnmiWarnings(name);
-                console.log('[KNMI] Warning result:', state.knmiWarning);
             } catch (e) {
-                console.log('[KNMI] Warning fetch failed, using client-side detection');
+                // Fall back to client-side detection
             }
         }
         
@@ -2625,6 +2884,8 @@ function renderHourlyForecast(hourly) {
     const temps = hourly.temperature_2m.slice(startIndex, startIndex + 24);
     const codes = hourly.weather_code.slice(startIndex, startIndex + 24);
     const isDayArray = hourly.is_day ? hourly.is_day.slice(startIndex, startIndex + 24) : [];
+    const windSpeeds = hourly.wind_speed_10m ? hourly.wind_speed_10m.slice(startIndex, startIndex + 24) : [];
+    const precips = hourly.precipitation ? hourly.precipitation.slice(startIndex, startIndex + 24) : [];
     
     // Store hourly data for detail view
     state.hourlyData = { hours, temps, codes, isDayArray, startIndex };
@@ -2637,8 +2898,22 @@ function renderHourlyForecast(hourly) {
         const icon = getWeatherIcon(codes[index], isDay);
         const isSelected = state.selectedHourIndex === index;
         
+        // Check for warning at this hour
+        const hourlyWarning = detectHourlyWarning(
+            codes[index], 
+            windSpeeds[index] || 0, 
+            precips[index] || 0, 
+            temps[index]
+        );
+        const hasWarning = hourlyWarning !== null;
+        const warningClass = hasWarning ? `has-warning` : '';
+        const warningDot = hasWarning 
+            ? `<div class="hourly-warning-dot ${getWarningColorClass(hourlyWarning.level)}"></div>` 
+            : '';
+        
         return `
-            <div class="hourly-item ${isSelected ? 'selected' : ''}" data-index="${index}">
+            <div class="hourly-item ${isSelected ? 'selected' : ''} ${warningClass}" data-index="${index}">
+                ${warningDot}
                 <div class="hourly-time">${isNow ? t('time.now') : formatHour(hour)}</div>
                 <div class="hourly-icon">${icon}</div>
                 <div class="hourly-temp">${convertTemp(temps[index])}°</div>
@@ -2704,6 +2979,17 @@ function selectHourlyItem(index) {
         elements.hourlyDetailFeelsLikeLabel.textContent = t('ui.feelsLike');
         elements.hourlyDetailPrecipLabel.textContent = t('ui.precipitation');
         elements.hourlyBackText.textContent = t('ui.back');
+        
+        // Check for hourly warning (use weather conditions for the specific hour)
+        const hourlyWarning = detectHourlyWarning(weatherCode, windSpeed, precip, temp);
+        if (hourlyWarning && elements.hourlyDetailWarning) {
+            elements.hourlyDetailWarning.classList.remove('hidden', 'warning-yellow', 'warning-orange', 'warning-red');
+            elements.hourlyDetailWarning.classList.add(getWarningColorClass(hourlyWarning.level));
+            elements.hourlyWarningIcon.textContent = hourlyWarning.icon;
+            elements.hourlyWarningTitle.textContent = hourlyWarning.title;
+        } else if (elements.hourlyDetailWarning) {
+            elements.hourlyDetailWarning.classList.add('hidden');
+        }
         
         // Show the overlay
         elements.hourlyDetailOverlay.classList.remove('hidden');
@@ -2840,6 +3126,24 @@ function selectDailyItem(index) {
         if (elements.dailyDetailSunriseLabel) elements.dailyDetailSunriseLabel.textContent = t('ui.sunrise');
         if (elements.dailyDetailSunsetLabel) elements.dailyDetailSunsetLabel.textContent = t('ui.sunset');
         elements.dailyBackText.textContent = t('ui.back');
+        
+        // Check for daily warning
+        // For today (index 0), use KNMI warning if available, otherwise client-side detection
+        let dayWarning = null;
+        if (index === 0 && state.knmiWarning) {
+            dayWarning = state.knmiWarning;
+        } else {
+            dayWarning = detectWarnings(state.weatherData, index);
+        }
+        
+        if (dayWarning && elements.dailyDetailWarning) {
+            elements.dailyDetailWarning.classList.remove('hidden', 'warning-yellow', 'warning-orange', 'warning-red');
+            elements.dailyDetailWarning.classList.add(getWarningColorClass(dayWarning.level));
+            elements.dailyWarningIcon.textContent = dayWarning.icon;
+            elements.dailyWarningTitle.textContent = dayWarning.title;
+        } else if (elements.dailyDetailWarning) {
+            elements.dailyDetailWarning.classList.add('hidden');
+        }
         
         // Show the overlay
         elements.dailyDetailOverlay.classList.remove('hidden');
@@ -3104,7 +3408,6 @@ async function loadRadarData() {
         const allFrames = [...pastFrames, ...nowcastFrames];
         
         if (allFrames.length === 0) {
-            console.log('No radar frames available');
             elements.mapOverlay.classList.add('hidden');
             return;
         }

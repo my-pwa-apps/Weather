@@ -5,13 +5,8 @@
 
 /* CSS Variables - Fluent Design System */
 :root {
-    /* Fluent Acrylic colors */
-    --acrylic-bg: rgba(255, 255, 255, 0.7);
-    --acrylic-dark: rgba(32, 32, 32, 0.7);
-    
     /* Primary gradient */
     --primary: #0078d4;
-    --primary-light: #50a3e5;
     --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     
     /* Weather backgrounds */
@@ -33,7 +28,6 @@
     --shadow-4: 0 2px 4px rgba(0,0,0,0.08);
     --shadow-8: 0 4px 8px rgba(0,0,0,0.08);
     --shadow-16: 0 8px 16px rgba(0,0,0,0.1);
-    --shadow-card: 0 2px 8px rgba(0,0,0,0.08);
     
     /* Radii - Fluent uses softer corners */
     --radius-sm: 4px;
@@ -748,6 +742,90 @@ body.night-mode .weather-warning .warning-description {
 .daily-warning-indicator.warning-red {
     background: #ef4444;
     box-shadow: 0 0 6px rgba(239, 68, 68, 0.5);
+}
+
+/* Detail warning banner (for hourly/daily detail overlays) */
+.detail-warning-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: var(--space-sm);
+}
+
+.detail-warning-banner.hidden {
+    display: none;
+}
+
+.detail-warning-banner.warning-yellow {
+    background: rgba(251, 191, 36, 0.2);
+    border: 1px solid rgba(251, 191, 36, 0.5);
+    color: #92400e;
+}
+
+.detail-warning-banner.warning-orange {
+    background: rgba(249, 115, 22, 0.2);
+    border: 1px solid rgba(249, 115, 22, 0.5);
+    color: #9a3412;
+}
+
+.detail-warning-banner.warning-red {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #991b1b;
+}
+
+.detail-warning-icon {
+    font-size: 1rem;
+}
+
+.detail-warning-title {
+    font-weight: 600;
+}
+
+/* Dark mode detail warning banner */
+body.night-mode .detail-warning-banner.warning-yellow {
+    color: #fbbf24;
+}
+
+body.night-mode .detail-warning-banner.warning-orange {
+    color: #fb923c;
+}
+
+body.night-mode .detail-warning-banner.warning-red {
+    color: #f87171;
+}
+
+/* Hourly item warning indicator */
+.hourly-item.has-warning {
+    position: relative;
+}
+
+.hourly-warning-dot {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.hourly-warning-dot.warning-yellow {
+    background: #fbbf24;
+    box-shadow: 0 0 4px rgba(251, 191, 36, 0.6);
+}
+
+.hourly-warning-dot.warning-orange {
+    background: #f97316;
+    box-shadow: 0 0 4px rgba(249, 115, 22, 0.6);
+}
+
+.hourly-warning-dot.warning-red {
+    background: #ef4444;
+    box-shadow: 0 0 4px rgba(239, 68, 68, 0.6);
 }
 
 /* Weather Details Grid - Equal sized tiles */
@@ -1670,13 +1748,15 @@ body.night-mode .data-source-select option {
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--surface-elevated);
+    background: var(--bg-card);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
     padding: var(--space-md) var(--space-lg);
     border-radius: var(--radius-lg);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
     z-index: 1001;
     animation: toastSlideUp 0.3s var(--ease-fluent);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-color);
 }
 
 @keyframes toastSlideUp {
@@ -1726,7 +1806,7 @@ body.night-mode .data-source-select option {
 }
 
 .update-btn:hover {
-    background: var(--primary-dark);
+    background: #005a9e;
 }
 
 .install-content {

@@ -3,7 +3,7 @@
  * Handles caching and offline functionality
  */
 
-const CACHE_NAME = 'weather-v47';
+const CACHE_NAME = 'weather-v49';
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -21,30 +21,21 @@ const API_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing service worker...');
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('[SW] Caching static assets');
-                return cache.addAll(STATIC_ASSETS);
-            })
-            // Don't skip waiting automatically - wait for user confirmation
+            .then((cache) => cache.addAll(STATIC_ASSETS))
     );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating service worker...');
     event.waitUntil(
         caches.keys()
             .then((cacheNames) => {
                 return Promise.all(
                     cacheNames
                         .filter((name) => name !== CACHE_NAME && name !== API_CACHE_NAME)
-                        .map((name) => {
-                            console.log('[SW] Deleting old cache:', name);
-                            return caches.delete(name);
-                        })
+                        .map((name) => caches.delete(name))
                 );
             })
             .then(() => self.clients.claim())
@@ -57,12 +48,10 @@ let widgetLocationCache = null;
 // Handle messages from clients
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
-        console.log('[SW] Received SKIP_WAITING message, activating new version...');
         self.skipWaiting();
     }
     if (event.data && event.data.type === 'WIDGET_LOCATION_UPDATE') {
         widgetLocationCache = event.data.location;
-        console.log('[SW] Widget location updated:', widgetLocationCache);
     }
 });
 
@@ -129,7 +118,6 @@ async function cacheFirst(request) {
         }
         return networkResponse;
     } catch (error) {
-        console.log('[SW] Network request failed:', error);
         // Return offline fallback for HTML requests
         if (request.destination === 'document') {
             return caches.match('./index.html');
@@ -187,7 +175,6 @@ async function handleWidgetDataRequest() {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
-        console.log('[SW] Widget data request failed:', error);
         // Return cached fallback
         const cached = await caches.match('/widget/weather-data.json');
         if (cached) return cached;
@@ -217,7 +204,6 @@ async function networkFirst(request) {
         }
         return networkResponse;
     } catch (error) {
-        console.log('[SW] Network request failed, trying cache:', error);
         const cachedResponse = await caches.match(request);
         if (cachedResponse) {
             return cachedResponse;
@@ -314,7 +300,7 @@ async function updateWidget() {
             }
         }
     } catch (error) {
-        console.log('[SW] Widget update failed:', error);
+        // Widget update failed
     }
 }
 
@@ -352,7 +338,7 @@ async function getStoredLocation() {
             }
         }
     } catch (e) {
-        console.log('[SW] Could not get stored location');
+        // Could not get stored location
     }
     return null;
 }
@@ -365,7 +351,5 @@ self.addEventListener('sync', (event) => {
 });
 
 async function syncWeather() {
-    // This would sync any pending weather data requests
-    console.log('[SW] Background sync triggered');
     await updateWidget();
 }
