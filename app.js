@@ -1211,6 +1211,39 @@ const elements = {
     dataSourceSelect: document.getElementById('dataSourceSelect')
 };
 
+// Lock screen orientation to portrait
+function lockOrientation() {
+    // Try using the Screen Orientation API (most modern browsers)
+    if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('portrait').catch(err => {
+            // Lock failed - probably not in fullscreen/standalone mode
+            // Fallback will be CSS-based blocking
+            console.log('Orientation lock not available:', err.message);
+        });
+    } else if (screen.lockOrientation) {
+        // Older Android browsers
+        screen.lockOrientation('portrait');
+    } else if (screen.mozLockOrientation) {
+        // Firefox
+        screen.mozLockOrientation('portrait');
+    } else if (screen.msLockOrientation) {
+        // IE/Edge (old)
+        screen.msLockOrientation('portrait');
+    }
+    
+    // Also listen for orientation changes to reapply lock if needed
+    if (window.addEventListener) {
+        window.addEventListener('orientationchange', () => {
+            // Reapply lock after orientation change
+            setTimeout(() => {
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('portrait').catch(() => {});
+                }
+            }, 100);
+        });
+    }
+}
+
 // Initialize the app
 async function init() {
     // Load saved language
@@ -1257,6 +1290,9 @@ async function init() {
     if (savedDataSource) {
         state.dataSource = savedDataSource;
     }
+    
+    // Lock screen orientation to portrait
+    lockOrientation();
     
     registerServiceWorker();
     setupEventListeners();
