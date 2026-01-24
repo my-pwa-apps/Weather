@@ -1213,33 +1213,39 @@ const elements = {
 
 // Lock screen orientation to portrait
 function lockOrientation() {
-    // Try using the Screen Orientation API (most modern browsers)
-    if (screen.orientation && screen.orientation.lock) {
-        screen.orientation.lock('portrait').catch(err => {
-            // Lock failed - probably not in fullscreen/standalone mode
-            // Fallback will be CSS-based blocking
-            console.log('Orientation lock not available:', err.message);
-        });
-    } else if (screen.lockOrientation) {
-        // Older Android browsers
-        screen.lockOrientation('portrait');
-    } else if (screen.mozLockOrientation) {
-        // Firefox
-        screen.mozLockOrientation('portrait');
-    } else if (screen.msLockOrientation) {
-        // IE/Edge (old)
-        screen.msLockOrientation('portrait');
-    }
+    const lock = () => {
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('portrait').catch(err => {
+                console.log('Orientation lock info:', err.message);
+            });
+        } else if (screen.lockOrientation) {
+            screen.lockOrientation('portrait');
+        } else if (screen.mozLockOrientation) {
+            screen.mozLockOrientation('portrait');
+        } else if (screen.msLockOrientation) {
+            screen.msLockOrientation('portrait');
+        }
+    };
+
+    // Attempt immediately
+    lock();
+
+    // Re-attempt on user interaction (required by some browsers)
+    const interactionEvents = ['click', 'touchstart', 'keydown'];
+    const onInteraction = () => {
+        lock();
+        // We can keep trying on interactions or remove after success
+        // But since lock might be lost, keeping it doesn't hurt much
+    };
+
+    interactionEvents.forEach(event => {
+        window.addEventListener(event, onInteraction, { passive: true });
+    });
     
     // Also listen for orientation changes to reapply lock if needed
     if (window.addEventListener) {
         window.addEventListener('orientationchange', () => {
-            // Reapply lock after orientation change
-            setTimeout(() => {
-                if (screen.orientation && screen.orientation.lock) {
-                    screen.orientation.lock('portrait').catch(() => {});
-                }
-            }, 100);
+            setTimeout(lock, 100);
         });
     }
 }
@@ -2249,6 +2255,10 @@ function showTabContent() {
     elements.tabContentContainer.classList.remove('hidden');
     elements.errorState.classList.add('hidden');
     
+    // Stop subtle spinner
+    const refreshIcon = document.querySelector('#locationBtn svg');
+    if (refreshIcon) refreshIcon.style.animation = '';
+    
     // Switch to saved/default tab
     switchTab(state.activeTab);
 }
@@ -2482,6 +2492,10 @@ async function detectLocation() {
         
         const { latitude, longitude } = position.coords;
         
+        // Start weather fetch immediately in parallel with geocoding
+        // This makes the app feel much faster
+        const weatherPromise = fetchWeather(latitude, longitude);
+        
         try {
             // Use BigDataCloud free reverse geocoding API (CORS-friendly)
             const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=${state.language}`);
@@ -2524,7 +2538,27 @@ async function detectLocation() {
         }
         
         localStorage.setItem('weatherLocation', JSON.stringify(state.currentLocation));
-        await fetchWeather();
+        
+        // Update header now that we have name
+        const { name, country } = state.currentLocation;
+        const locationName = country ? `${name}, ${country}` : name;
+        elements.locationName.textContent = locationName;
+        
+        // Wait for weather to complete if it hasn't already
+        await weatherPromise;
+        
+        // If we are in Netherlands, ensure we check for KNMI warnings
+        // (fetchWeather might have skipped this if location wasn't set yet)
+        if (isLocationInNetherlands(state.currentLocation) && !state.knmiWarning) {
+             fetchKnmiWarnings(state.currentLocation.name)
+                .then(warning => {
+                    if (warning) {
+                        state.knmiWarning = warning;
+                        renderWeather(state.weatherData);
+                    }
+                })
+                .catch(e => console.warn('KNMI warning fallback fetch failed', e));
+        }
         
     } catch (error) {
         console.error('Geolocation error:', error);
@@ -2626,25 +2660,50 @@ async function handleSearch() {
 }
 
 // Fetch weather data
-async function fetchWeather() {
-    if (!state.currentLocation) return;
+async function fetchWeather(latArg, lonArg) {
+    let latitude, longitude;
+
+    if (latArg !== undefined && lonArg !== undefined) {
+        latitude = latArg;
+        longitude = lonArg;
+    } else {
+        if (!state.currentLocation) return;
+        latitude = state.currentLocation.latitude;
+        longitude = state.currentLocation.longitude;
+    }
+    
+    // Reset map if location has changed significantly
+    if (state.currentLocation) {
+        const dist = Math.sqrt(
+            Math.pow(latitude - state.currentLocation.latitude, 2) + 
+            Math.pow(longitude - state.currentLocation.longitude, 2)
+        );
+        if (dist > 0.01) {
+            state.mapInitialized = false;
+        }
+    } else {
+        state.mapInitialized = false;
+    }
     
     showLoading();
     
-    const { latitude, longitude, name, country } = state.currentLocation;
-    const locationName = country ? `${name}, ${country}` : name;
-    elements.locationName.textContent = locationName;
-    
-    // Store location for widget access
-    const widgetLocation = { latitude, longitude, name: locationName };
-    localStorage.setItem('widgetLocation', JSON.stringify(widgetLocation));
-    
-    // Notify service worker of location update for widgets
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-            type: 'WIDGET_LOCATION_UPDATE',
-            location: widgetLocation
-        });
+    // Only update UI text if state is available (might be running parallel to geocoding)
+    if (state.currentLocation) {
+        const { name, country } = state.currentLocation;
+        const locationName = country ? `${name}, ${country}` : name;
+        elements.locationName.textContent = locationName;
+        
+        // Store location for widget access
+        const widgetLocation = { latitude, longitude, name: locationName };
+        localStorage.setItem('widgetLocation', JSON.stringify(widgetLocation));
+        
+        // Notify service worker of location update for widgets
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+                type: 'WIDGET_LOCATION_UPDATE',
+                location: widgetLocation
+            });
+        }
     }
     
     try {
@@ -2660,18 +2719,24 @@ async function fetchWeather() {
         const data = await response.json();
         state.weatherData = data;
         
-        // Fetch official KNMI warnings for Netherlands locations
-        state.knmiWarning = null;
-        if (isLocationInNetherlands(state.currentLocation)) {
-            try {
-                state.knmiWarning = await fetchKnmiWarnings(name);
-            } catch (e) {
-                // Fall back to client-side detection
-            }
-        }
-        
+        // Render immediately for best performance
         renderWeather(data);
         updateBackground(data.current.weather_code, data.current.temperature_2m);
+        
+        // Fetch official KNMI warnings for Netherlands locations asynchronously
+        // This prevents blocking the UI while waiting for the secondary API
+        state.knmiWarning = null;
+        if (state.currentLocation && isLocationInNetherlands(state.currentLocation)) {
+            fetchKnmiWarnings(state.currentLocation.name)
+                .then(warning => {
+                    if (warning) {
+                        state.knmiWarning = warning;
+                        // Re-render to show the warning
+                        renderWeather(state.weatherData);
+                    }
+                })
+                .catch(e => console.warn('KNMI warning fetch failed', e)); // Non-critical
+        }
         
     } catch (error) {
         console.error('Weather fetch error:', error);
@@ -2759,11 +2824,8 @@ function renderWeather(data) {
     // Show tab interface
     showTabContent();
     
-    // Reset map initialization flag when location changes
-    state.mapInitialized = false;
-    
-    // If radar tab is active, initialize the map
-    if (state.activeTab === 'radar') {
+    // If radar tab is active, initialize the map if needed
+    if (state.activeTab === 'radar' && !state.mapInitialized) {
         setTimeout(() => {
             initMap();
             state.mapInitialized = true;
@@ -3190,10 +3252,17 @@ function updateDateTime() {
 
 // Show loading state
 function showLoading() {
-    elements.loadingState.classList.remove('hidden');
-    elements.tabNavigation.classList.add('hidden');
-    elements.tabContentContainer.classList.add('hidden');
-    elements.errorState.classList.add('hidden');
+    // Only hide content if we don't have weather data yet
+    if (!state.weatherData) {
+        elements.loadingState.classList.remove('hidden');
+        elements.tabNavigation.classList.add('hidden');
+        elements.tabContentContainer.classList.add('hidden');
+        elements.errorState.classList.add('hidden');
+    } else {
+        // Just show subtle spinner on refresh button
+        const refreshIcon = document.querySelector('#locationBtn svg');
+        if (refreshIcon) refreshIcon.style.animation = 'spin 1s infinite linear';
+    }
     
     // Stop any radar animation
     stopRadarAnimation();

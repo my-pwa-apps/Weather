@@ -3,7 +3,7 @@
  * Handles caching and offline functionality
  */
 
-const CACHE_NAME = 'weather-v55';
+const CACHE_NAME = 'weather-v56';
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -17,7 +17,6 @@ const STATIC_ASSETS = [
 
 // API cache for weather data
 const API_CACHE_NAME = 'weather-api-v1';
-const API_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {

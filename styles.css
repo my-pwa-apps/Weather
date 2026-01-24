@@ -2177,31 +2177,28 @@ html {
 
 /* Force portrait orientation on mobile */
 @media screen and (orientation: landscape) and (max-width: 900px) {
-    body::before {
-        content: '📱 Draai je telefoon voor de beste ervaring';
-        position: fixed;
-        inset: 0;
-        background: var(--primary-gradient);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        color: white;
-        text-align: center;
-        padding: 2rem;
-        z-index: 10000;
-    }
-    
-    body::after {
-        content: '';
-        position: fixed;
-        inset: 0;
-        background: var(--primary-gradient);
-        z-index: 9999;
+    /* Allow scrolling in landscape mode since height is limited */
+    body {
+        height: auto;
+        min-height: 100%;
+        overflow-y: auto;
     }
     
     .app-container {
-        display: none !important;
+        height: auto;
+        min-height: 100%;
+        overflow: visible;
+        padding-bottom: 20px;
+    }
+    
+    /* Adjust grid layouts for landscape */
+    .hourly-scroll {
+        grid-template-columns: repeat(12, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+    }
+    
+    .weather-details {
+        grid-template-columns: repeat(4, 1fr);
     }
 }
 
