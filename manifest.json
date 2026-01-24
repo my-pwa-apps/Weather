@@ -8,7 +8,7 @@
     "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
     "background_color": "#667eea",
     "theme_color": "#667eea",
-    "orientation": "portrait-primary",
+    "orientation": "portrait",
     "scope": ".",
     "lang": "nl",
     "edge_side_panel": {

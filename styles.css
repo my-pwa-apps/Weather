@@ -2175,32 +2175,8 @@ html {
     scroll-behavior: smooth;
 }
 
-/* Force portrait orientation on mobile */
-@media screen and (orientation: landscape) and (max-width: 900px) {
-    /* Allow scrolling in landscape mode since height is limited */
-    body {
-        height: auto;
-        min-height: 100%;
-        overflow-y: auto;
-    }
-    
-    .app-container {
-        height: auto;
-        min-height: 100%;
-        overflow: visible;
-        padding-bottom: 20px;
-    }
-    
-    /* Adjust grid layouts for landscape */
-    .hourly-scroll {
-        grid-template-columns: repeat(12, 1fr);
-        grid-template-rows: repeat(2, 1fr);
-    }
-    
-    .weather-details {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
+/* Force portrait orientation on mobile - REMOVED to prevent rotation reaction */
+/* The app will maintain its fixed height layout even in landscape */
 
 /* Print styles */
 @media print {

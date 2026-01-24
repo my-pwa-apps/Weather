@@ -53,6 +53,7 @@ const state = {
 
 ### Service Worker
 - Cache versioning: Increment `CACHE_NAME` version (`weather-v36`) when updating cached assets
+- **ALWAYS** bump the `CACHE_NAME` version in `sw.js` after making any changes to the codebase
 - Widget data endpoint: `widget/weather-data.json` is handled dynamically by service worker
 
 ## Development

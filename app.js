@@ -874,10 +874,14 @@ function parseKnmiWarningText(text) {
     }
     
     // Detect warning type and set icon
-    if (fullText.includes('sneeuw') || fullText.includes('gladheid') || fullText.includes('ijzel')) {
+    if (fullText.includes('sneeuw')) {
         icon = '❄️';
         type = 'snow';
         title = t('warnings.snow');
+    } else if (fullText.includes('gladheid') || fullText.includes('ijzel')) {
+        icon = '🧊';
+        type = 'ice';
+        title = t('warnings.ice');
     } else if (fullText.includes('storm') || fullText.includes('zeer zware windstoten')) {
         icon = '🌪️';
         type = 'storm';
@@ -953,7 +957,8 @@ async function fetchWeerliveWarnings(locationName) {
             
             let icon = '⚠️';
             const headline = (weather.lkop || '').toLowerCase();
-            if (headline.includes('sneeuw') || headline.includes('gladheid')) icon = '❄️';
+            if (headline.includes('sneeuw')) icon = '❄️';
+            else if (headline.includes('gladheid') || headline.includes('ijzel')) icon = '🧊';
             else if (headline.includes('wind') || headline.includes('storm')) icon = '💨';
             else if (headline.includes('regen')) icon = '🌧️';
             else if (headline.includes('onweer')) icon = '⛈️';
