@@ -408,7 +408,8 @@ function getFogIcon() {
 const beaufortThresholds = [1, 6, 12, 20, 29, 39, 50, 62, 75, 89, 103, 118];
 
 function getBeaufort(kmh) {
-    return beaufortThresholds.findIndex(t => kmh < t);
+    const index = beaufortThresholds.findIndex(t => kmh < t);
+    return index === -1 ? 12 : index;
 }
 
 // Wind direction constants
@@ -423,6 +424,28 @@ const t = (key) => key.split('.').reduce((obj, k) => obj?.[k], translations[stat
 
 // Get weather description in current language
 const getWeatherDescription = (code) => translations[state.language].weather[code] || 'Unknown';
+
+// Shared country code to short name mapping
+function getCountryName(countryCode) {
+    const names = {
+        'NL': { nl: 'Nederland', en: 'Netherlands' },
+        'BE': { nl: 'België', en: 'Belgium' },
+        'DE': { nl: 'Duitsland', en: 'Germany' },
+        'FR': { nl: 'Frankrijk', en: 'France' },
+        'GB': { nl: 'Verenigd Koninkrijk', en: 'United Kingdom' },
+        'US': { nl: 'Verenigde Staten', en: 'United States' },
+        'ES': { nl: 'Spanje', en: 'Spain' },
+        'IT': { nl: 'Italië', en: 'Italy' },
+        'PT': { nl: 'Portugal', en: 'Portugal' },
+        'AT': { nl: 'Oostenrijk', en: 'Austria' },
+        'CH': { nl: 'Zwitserland', en: 'Switzerland' },
+        'LU': { nl: 'Luxemburg', en: 'Luxembourg' }
+    };
+    return names[countryCode]?.[state.language] || null;
+}
+
+// Shared day name keys
+const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 // Debounce helper
 const debounce = (func, wait) => {
@@ -476,7 +499,6 @@ function detectWarnings(weatherData, dayIndex = null) {
     // Check for thunderstorm (weather codes 95, 96, 99)
     if ([95, 96, 99].includes(weatherCode)) {
         const level = weatherCode === 99 ? 'orange' : 'yellow';
-        const hasHail = [96, 99].includes(weatherCode);
         warnings.push({
             level,
             type: 'thunder',
@@ -1043,7 +1065,6 @@ const state = {
     deferredPrompt: null,
     map: null,
     radarLayers: [],
-    buienradarLayers: [],
     currentRadarIndex: 0,
     radarData: null,
     isPlaying: false,
@@ -1075,7 +1096,6 @@ const elements = {
     locationSearch: document.getElementById('locationSearch'),
     searchBtn: document.getElementById('searchBtn'),
     searchSuggestions: document.getElementById('searchSuggestions'),
-    locationTime: document.getElementById('locationTime'),
     loadingState: document.getElementById('loadingState'),
     loadingText: document.getElementById('loadingText'),
     errorState: document.getElementById('errorState'),
@@ -1103,7 +1123,6 @@ const elements = {
     installText: document.getElementById('installText'),
     installBtn: document.getElementById('installBtn'),
     dismissBtn: document.getElementById('dismissBtn'),
-    appTitle: document.getElementById('appTitle'),
     // Tab elements
     tabNavigation: document.getElementById('tabNavigation'),
     tabContentContainer: document.getElementById('tabContentContainer'),
@@ -1213,46 +1232,35 @@ const elements = {
     dailyWarningTitle: document.getElementById('dailyWarningTitle'),
     // Data source settings
     settingsDataSourceTitle: document.getElementById('settingsDataSourceTitle'),
-    dataSourceSelect: document.getElementById('dataSourceSelect')
+    dataSourceSelect: document.getElementById('dataSourceSelect'),
+    // Cached queries
+    temperatureUnit: document.querySelector('.temperature-unit'),
+    refreshIcon: document.querySelector('#locationBtn svg')
 };
 
 // Lock screen orientation to portrait
 function lockOrientation() {
     const lock = () => {
         if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('portrait').catch(err => {
-                console.log('Orientation lock info:', err.message);
-            });
-        } else if (screen.lockOrientation) {
-            screen.lockOrientation('portrait');
-        } else if (screen.mozLockOrientation) {
-            screen.mozLockOrientation('portrait');
-        } else if (screen.msLockOrientation) {
-            screen.msLockOrientation('portrait');
+            screen.orientation.lock('portrait').catch(() => {});
         }
     };
 
     // Attempt immediately
     lock();
 
-    // Re-attempt on user interaction (required by some browsers)
+    // Re-attempt once on first user interaction (required by some browsers)
     const interactionEvents = ['click', 'touchstart', 'keydown'];
     const onInteraction = () => {
         lock();
-        // We can keep trying on interactions or remove after success
-        // But since lock might be lost, keeping it doesn't hurt much
+        interactionEvents.forEach(event => {
+            window.removeEventListener(event, onInteraction);
+        });
     };
 
     interactionEvents.forEach(event => {
-        window.addEventListener(event, onInteraction, { passive: true });
+        window.addEventListener(event, onInteraction, { passive: true, once: true });
     });
-    
-    // Also listen for orientation changes to reapply lock if needed
-    if (window.addEventListener) {
-        window.addEventListener('orientationchange', () => {
-            setTimeout(lock, 100);
-        });
-    }
 }
 
 // Initialize the app
@@ -1309,7 +1317,6 @@ async function init() {
     setupEventListeners();
     setupTabs();
     loadFavorites();
-    updateDateTime();
     updateUILanguage();
     updateTimeFormatButtons();
     updateTemperatureButtons();
@@ -1317,7 +1324,6 @@ async function init() {
     updateLanguageButtons();
     updateThemeButtons();
     updateDataSourceSelect();
-    setInterval(updateDateTime, 60000);
     
     // Apply initial theme
     if (state.theme === 'dark') {
@@ -1343,31 +1349,14 @@ async function init() {
 async function refreshLocationName(latitude, longitude) {
     try {
         const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=${state.language}`);
+        if (!response.ok) throw new Error('Geocoding failed');
         const data = await response.json();
         
-        // Map country codes to short names (matching Open-Meteo format)
-        const countryShortNames = {
-            'NL': state.language === 'nl' ? 'Nederland' : 'Netherlands',
-            'BE': state.language === 'nl' ? 'België' : 'Belgium',
-            'DE': state.language === 'nl' ? 'Duitsland' : 'Germany',
-            'FR': state.language === 'nl' ? 'Frankrijk' : 'France',
-            'GB': state.language === 'nl' ? 'Verenigd Koninkrijk' : 'United Kingdom',
-            'US': state.language === 'nl' ? 'Verenigde Staten' : 'United States',
-            'ES': state.language === 'nl' ? 'Spanje' : 'Spain',
-            'IT': state.language === 'nl' ? 'Italië' : 'Italy',
-            'PT': state.language === 'nl' ? 'Portugal' : 'Portugal',
-            'AT': state.language === 'nl' ? 'Oostenrijk' : 'Austria',
-            'CH': state.language === 'nl' ? 'Zwitserland' : 'Switzerland',
-            'LU': state.language === 'nl' ? 'Luxemburg' : 'Luxembourg'
-        };
-        
         const countryCode = data.countryCode || '';
-        const countryName = countryShortNames[countryCode] || data.countryName || '';
+        const countryName = getCountryName(countryCode) || data.countryName || '';
         
-        // Prioritize locality (village/neighborhood) over city for more accurate names
-        // locality = specific place, city = administrative center (may be nearby larger town)
         state.currentLocation = {
-            name: data.locality || data.city || data.principalSubdivision || 'Your Location',
+            name: data.locality || data.city || data.principalSubdivision || t('ui.weather'),
             country: countryName,
             latitude,
             longitude
@@ -1386,9 +1375,6 @@ async function refreshLocationName(latitude, longitude) {
 // Settings modal functions
 function openSettings() {
     elements.settingsModal.classList.remove('hidden');
-    if (elements.locationSearch) {
-        elements.locationSearch.focus();
-    }
 }
 
 function closeSettings() {
@@ -1683,11 +1669,6 @@ function updateUILanguage() {
     // Update page title
     document.title = t('ui.appTitle');
     
-    // Update app title
-    if (elements.appTitle) {
-        elements.appTitle.textContent = t('ui.weather');
-    }
-    
     // Update search placeholder
     if (elements.locationSearch) {
         elements.locationSearch.placeholder = t('ui.searchPlaceholder');
@@ -1862,15 +1843,14 @@ function showUpdateToast() {
     
     updateBtn.addEventListener('click', () => {
         if (newWorker) {
-            // Tell the new service worker to skip waiting
             newWorker.postMessage({ type: 'SKIP_WAITING' });
         }
         toast.classList.add('hidden');
-    });
+    }, { once: true });
     
     dismissBtn.addEventListener('click', () => {
         toast.classList.add('hidden');
-    });
+    }, { once: true });
 }
 
 // ========================================
@@ -2261,8 +2241,7 @@ function showTabContent() {
     elements.errorState.classList.add('hidden');
     
     // Stop subtle spinner
-    const refreshIcon = document.querySelector('#locationBtn svg');
-    if (refreshIcon) refreshIcon.style.animation = '';
+    if (elements.refreshIcon) elements.refreshIcon.style.animation = '';
     
     // Switch to saved/default tab
     switchTab(state.activeTab);
@@ -2504,38 +2483,21 @@ async function detectLocation() {
         try {
             // Use BigDataCloud free reverse geocoding API (CORS-friendly)
             const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=${state.language}`);
+            if (!response.ok) throw new Error('Geocoding failed');
             const data = await response.json();
             
-            // Map country codes to short names (matching Open-Meteo format)
-            const countryShortNames = {
-                'NL': state.language === 'nl' ? 'Nederland' : 'Netherlands',
-                'BE': state.language === 'nl' ? 'België' : 'Belgium',
-                'DE': state.language === 'nl' ? 'Duitsland' : 'Germany',
-                'FR': state.language === 'nl' ? 'Frankrijk' : 'France',
-                'GB': state.language === 'nl' ? 'Verenigd Koninkrijk' : 'United Kingdom',
-                'US': state.language === 'nl' ? 'Verenigde Staten' : 'United States',
-                'ES': state.language === 'nl' ? 'Spanje' : 'Spain',
-                'IT': state.language === 'nl' ? 'Italië' : 'Italy',
-                'PT': state.language === 'nl' ? 'Portugal' : 'Portugal',
-                'AT': state.language === 'nl' ? 'Oostenrijk' : 'Austria',
-                'CH': state.language === 'nl' ? 'Zwitserland' : 'Switzerland',
-                'LU': state.language === 'nl' ? 'Luxemburg' : 'Luxembourg'
-            };
-            
             const countryCode = data.countryCode || '';
-            const countryName = countryShortNames[countryCode] || data.countryName || '';
+            const countryName = getCountryName(countryCode) || data.countryName || '';
             
-            // Prioritize locality (village/neighborhood) over city for more accurate names
-            // locality = specific place, city = administrative center (may be nearby larger town)
             state.currentLocation = {
-                name: data.locality || data.city || data.principalSubdivision || 'Your Location',
+                name: data.locality || data.city || data.principalSubdivision || t('ui.weather'),
                 country: countryName,
                 latitude,
                 longitude
             };
         } catch {
             state.currentLocation = {
-                name: 'Your Location',
+                name: t('ui.weather'),
                 country: '',
                 latitude,
                 longitude
@@ -2555,25 +2517,26 @@ async function detectLocation() {
         // If we are in Netherlands, ensure we check for KNMI warnings
         // (fetchWeather might have skipped this if location wasn't set yet)
         if (isLocationInNetherlands(state.currentLocation) && !state.knmiWarning) {
-             fetchKnmiWarnings(state.currentLocation.name)
+            const locationAtFetch = state.currentLocation;
+            fetchKnmiWarnings(state.currentLocation.name)
                 .then(warning => {
-                    if (warning) {
+                    if (warning && state.currentLocation === locationAtFetch) {
                         state.knmiWarning = warning;
                         renderWeather(state.weatherData);
                     }
                 })
-                .catch(e => console.warn('KNMI warning fallback fetch failed', e));
+                .catch(() => {});
         }
         
     } catch (error) {
         console.error('Geolocation error:', error);
-        let message = 'Unable to detect your location. Please search for a city.';
+        let message = t('ui.locationError');
         if (error.code === 1) {
-            message = 'Location access denied. Please enable location services or search for a city.';
+            message = t('ui.locationDenied');
         } else if (error.code === 2) {
-            message = 'Location unavailable. Please search for a city.';
+            message = t('ui.locationUnavailable');
         } else if (error.code === 3) {
-            message = 'Location request timed out. Please try again or search for a city.';
+            message = t('ui.locationTimeout');
         }
         showError(message);
     }
@@ -2593,6 +2556,7 @@ async function handleSearchInput() {
         const response = await fetch(
             `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=${state.language}&format=json`
         );
+        if (!response.ok) return;
         const data = await response.json();
         
         if (data.results && data.results.length > 0) {
@@ -2651,6 +2615,7 @@ async function handleSearch() {
         const response = await fetch(
             `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=${state.language}&format=json`
         );
+        if (!response.ok) throw new Error('Search request failed');
         const data = await response.json();
         
         if (data.results && data.results.length > 0) {
@@ -2732,15 +2697,16 @@ async function fetchWeather(latArg, lonArg) {
         // This prevents blocking the UI while waiting for the secondary API
         state.knmiWarning = null;
         if (state.currentLocation && isLocationInNetherlands(state.currentLocation)) {
+            const locationAtFetch = state.currentLocation;
             fetchKnmiWarnings(state.currentLocation.name)
                 .then(warning => {
-                    if (warning) {
+                    // Guard: only apply if location hasn't changed since fetch started
+                    if (warning && state.currentLocation === locationAtFetch) {
                         state.knmiWarning = warning;
-                        // Re-render to show the warning
                         renderWeather(state.weatherData);
                     }
                 })
-                .catch(e => console.warn('KNMI warning fetch failed', e)); // Non-critical
+                .catch(() => {}); // Non-critical
         }
         
     } catch (error) {
@@ -2752,7 +2718,6 @@ async function fetchWeather(latArg, lonArg) {
 // Update weather display with current unit settings (called when units change)
 function updateWeatherDisplay(data) {
     const current = data.current;
-    const isDay = current.is_day === 1;
     const windSpeed = convertSpeed(current.wind_speed_10m);
     const beaufort = getBeaufort(Math.round(current.wind_speed_10m));
     const windDir = getWindDirection(current.wind_direction_10m);
@@ -2764,8 +2729,7 @@ function updateWeatherDisplay(data) {
     elements.precipitation.textContent = `${convertPrecip(current.precipitation)} ${getPrecipUnit()}`;
     
     // Update temperature unit display in HTML
-    const tempUnitEl = document.querySelector('.temperature-unit');
-    if (tempUnitEl) tempUnitEl.textContent = getTempUnit();
+    if (elements.temperatureUnit) elements.temperatureUnit.textContent = getTempUnit();
     
     // Re-render forecasts
     renderHourlyForecast(data.hourly);
@@ -2795,8 +2759,7 @@ function renderWeather(data) {
     elements.precipitation.textContent = `${convertPrecip(current.precipitation)} ${getPrecipUnit()}`;
     
     // Update temperature unit display in HTML
-    const tempUnitEl = document.querySelector('.temperature-unit');
-    if (tempUnitEl) tempUnitEl.textContent = getTempUnit();
+    if (elements.temperatureUnit) elements.temperatureUnit.textContent = getTempUnit();
     
     // Check for weather warnings
     // Use KNMI official warnings when KNMI is selected and location is in Netherlands
@@ -2981,7 +2944,6 @@ function renderDailyForecast(daily) {
         if (index === 0) {
             dayName = t('time.today');
         } else {
-            const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
             dayName = t(`days.${dayKeys[date.getDay()]}`);
         }
         const icon = getWeatherIcon(daily.weather_code[index], true);
@@ -3058,7 +3020,6 @@ function selectDailyItem(index) {
         if (index === 0) {
             dayName = t('time.today');
         } else {
-            const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
             dayName = t(`days.${dayKeys[date.getDay()]}`);
         }
         
@@ -3077,7 +3038,7 @@ function selectDailyItem(index) {
         };
         
         // Update daily detail overlay
-        elements.dailyDetailIcon.textContent = icon;
+        elements.dailyDetailIcon.innerHTML = icon;
         elements.dailyDetailTemp.textContent = `${dayName}`;
         elements.dailyDetailDesc.textContent = desc;
         elements.dailyDetailWind.innerHTML = `${windDirText} ${convertSpeed(windMax)} ${getSpeedUnit()}<br><small>${t('ui.beaufort')} ${beaufort}</small>`;
@@ -3241,20 +3202,6 @@ function updateDataSourceSelect() {
     }
 }
 
-// Update date/time display
-function updateDateTime() {
-    if (!elements.locationTime) return;
-    const now = new Date();
-    const options = { 
-        weekday: 'long', 
-        month: 'short', 
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
-    };
-    elements.locationTime.textContent = now.toLocaleDateString('en-US', options);
-}
-
 // Show loading state
 function showLoading() {
     // Only hide content if we don't have weather data yet
@@ -3265,8 +3212,7 @@ function showLoading() {
         elements.errorState.classList.add('hidden');
     } else {
         // Just show subtle spinner on refresh button
-        const refreshIcon = document.querySelector('#locationBtn svg');
-        if (refreshIcon) refreshIcon.style.animation = 'spin 1s infinite linear';
+        if (elements.refreshIcon) elements.refreshIcon.style.animation = 'spin 1s infinite linear';
     }
     
     // Stop any radar animation
@@ -3280,7 +3226,7 @@ function showError(message) {
     elements.tabContentContainer.classList.add('hidden');
     elements.errorState.classList.remove('hidden');
     elements.errorMessage.textContent = message;
-    elements.locationName.textContent = 'Weather';
+    elements.locationName.textContent = t('ui.weather');
 }
 
 // ========================================
@@ -3366,6 +3312,7 @@ async function loadRadarData() {
     
     try {
         const response = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+        if (!response.ok) throw new Error('Radar data unavailable');
         const data = await response.json();
         
         state.radarData = data;
@@ -3417,9 +3364,6 @@ async function loadRadarData() {
                 nowIndex = index;
             }
         });
-        
-        // Store the now index for reference
-        state.radarNowIndex = nowIndex;
         
         // Update slider range
         elements.timelineSlider.max = state.radarLayers.length - 1;

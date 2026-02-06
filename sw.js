@@ -3,7 +3,7 @@
  * Handles caching and offline functionality
  */
 
-const CACHE_NAME = 'weather-v57';
+const CACHE_NAME = 'weather-v58';
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -68,7 +68,7 @@ self.addEventListener('fetch', (event) => {
     // Handle API requests with network-first strategy
     if (url.hostname.includes('api.open-meteo.com') || 
         url.hostname.includes('geocoding-api.open-meteo.com') ||
-        url.hostname.includes('nominatim.openstreetmap.org') ||
+        url.hostname.includes('api.bigdatacloud.net') ||
         url.hostname.includes('api.rainviewer.com')) {
         event.respondWith(networkFirst(request));
         return;
@@ -125,6 +125,20 @@ async function cacheFirst(request) {
     }
 }
 
+// Shared weather icon mapping (complete WMO codes)
+const weatherIcons = {
+    0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+    45: '🌫️', 48: '🌫️',
+    51: '🌦️', 53: '🌦️', 55: '🌧️',
+    56: '🌧️', 57: '🌧️',
+    61: '🌧️', 63: '🌧️', 65: '🌧️',
+    66: '🌨️', 67: '🌨️',
+    71: '🌨️', 73: '🌨️', 75: '❄️', 77: '🌨️',
+    80: '🌦️', 81: '🌧️', 82: '⛈️',
+    85: '🌨️', 86: '🌨️',
+    95: '⛈️', 96: '⛈️', 99: '⛈️'
+};
+
 // Handle widget data request with dynamic weather data
 async function handleWidgetDataRequest() {
     try {
@@ -148,17 +162,8 @@ async function handleWidgetDataRequest() {
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m`;
         
         const response = await fetch(url);
+        if (!response.ok) throw new Error('Weather API error');
         const data = await response.json();
-        
-        const weatherIcons = {
-            0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
-            45: '🌫️', 48: '🌫️',
-            51: '🌦️', 53: '🌦️', 55: '🌧️',
-            61: '🌧️', 63: '🌧️', 65: '🌧️',
-            71: '🌨️', 73: '🌨️', 75: '❄️',
-            80: '🌦️', 81: '🌧️', 82: '⛈️',
-            95: '⛈️', 96: '⛈️', 99: '⛈️'
-        };
         
         const widgetData = {
             location: name || 'Onbekend',
@@ -211,7 +216,7 @@ async function networkFirst(request) {
     }
 }
 
-// Handle push notifications (future feature)
+// Handle push notifications
 self.addEventListener('push', (event) => {
     if (event.data) {
         const data = event.data.json();
@@ -269,17 +274,8 @@ async function updateWidget() {
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m`;
         
         const response = await fetch(url);
+        if (!response.ok) return;
         const data = await response.json();
-        
-        const weatherIcons = {
-            0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
-            45: '🌫️', 48: '🌫️',
-            51: '🌦️', 53: '🌦️', 55: '🌧️',
-            61: '🌧️', 63: '🌧️', 65: '🌧️',
-            71: '🌨️', 73: '🌨️', 75: '❄️',
-            80: '🌦️', 81: '🌧️', 82: '⛈️',
-            95: '⛈️', 96: '⛈️', 99: '⛈️'
-        };
         
         const widgetData = {
             location: name || 'Onbekend',
@@ -308,9 +304,12 @@ function getWeatherDesc(code) {
         0: 'Helder', 1: 'Overwegend helder', 2: 'Gedeeltelijk bewolkt', 3: 'Bewolkt',
         45: 'Mist', 48: 'Rijpmist',
         51: 'Lichte motregen', 53: 'Motregen', 55: 'Dichte motregen',
+        56: 'Lichte ijzel', 57: 'Dichte ijzel',
         61: 'Lichte regen', 63: 'Regen', 65: 'Zware regen',
-        71: 'Lichte sneeuw', 73: 'Sneeuw', 75: 'Zware sneeuw',
+        66: 'Lichte ijsregen', 67: 'Zware ijsregen',
+        71: 'Lichte sneeuw', 73: 'Sneeuw', 75: 'Zware sneeuw', 77: 'Sneeuwkorrels',
         80: 'Lichte buien', 81: 'Buien', 82: 'Zware buien',
+        85: 'Lichte sneeuwbuien', 86: 'Zware sneeuwbuien',
         95: 'Onweer', 96: 'Onweer met hagel', 99: 'Zwaar onweer'
     };
     return descriptions[code] || 'Onbekend';
